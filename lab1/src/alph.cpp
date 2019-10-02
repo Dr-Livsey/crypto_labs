@@ -42,6 +42,21 @@ crypto::alph::reverse_conv(byte key_byte, byte cypher_byte) const
     return this->at(((int)index(cypher_byte) - index(key_byte) + size()) % size());
 }
 
+crypto::text 
+crypto::alph::vector_conv(const text &i, const text &j, conv_t conv_type)
+{
+    text result;
+
+    for (std::size_t idx = 0; idx < std::min(i.size(), j.size()); idx++)
+    {
+        byte cur = (conv_type == conv_t::direct) ? direct_conv(i.at(idx), j.at(idx)) \
+                                                 : reverse_conv(i.at(idx), j.at(idx));
+        result.push_back(cur);
+    }
+
+    return result;
+}
+
 bool
 crypto::alph::is_belongs( const std::vector<byte> &vec ) const
 {

@@ -15,12 +15,13 @@ namespace crypto
         text( void ) : std::vector<byte>() {}
         text( file & );
         text( const std::initializer_list<byte> & );
+        text( const text::const_iterator &, const text::const_iterator & );
         text( const std::string & );
 
         void from_file( file & );
 
-        //void encrypt(algorithm *, key *);
-        //void decrypt(algorithm *, key *);
+        /* Concatanation of two texts */
+        text& operator+=( const text & );
     };
 
     fdict get_freq( const text& );

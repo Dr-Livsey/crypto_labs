@@ -17,6 +17,10 @@ crypto::text::text(
     insert(begin(), init_s.begin(), init_s.end());
 }
 
+crypto::text::text( 
+    const text::const_iterator &start, const text::const_iterator &fin ) 
+    : std::vector<byte>(start, fin) {}
+
 void
 crypto::text::from_file(file &fd)
 {
@@ -49,7 +53,8 @@ crypto::get_freq( const text &t )
     return retval;
 }
 
-std::string byte_to_hex( const crypto::byte &b )
+std::string 
+byte_to_hex( const crypto::byte &b )
 {
     std::stringstream ss;
 
@@ -58,8 +63,16 @@ std::string byte_to_hex( const crypto::byte &b )
     return "0x" + ss.str();
 }
 
+crypto::text&
+crypto::text::operator+=( const crypto::text &rhs )
+{
+    this->insert(end(), rhs.begin(), rhs.end());
+    return *this;
+}
+
 // Operations with output stream
-std::ostream& operator<<( std::ostream& stream, const crypto::text& obj)
+std::ostream& 
+operator<<( std::ostream& stream, const crypto::text& obj)
 {
     for (auto i = obj.begin(); i != obj.end(); i++) 
     {
@@ -68,7 +81,8 @@ std::ostream& operator<<( std::ostream& stream, const crypto::text& obj)
     return stream;
 }
 
-std::ostream& operator<<( std::ostream& stream, const crypto::fdict& obj)
+std::ostream& 
+operator<<( std::ostream& stream, const crypto::fdict& obj)
 {
     stream << "{";
     for (auto i = obj.begin(); i != obj.end(); i++) 

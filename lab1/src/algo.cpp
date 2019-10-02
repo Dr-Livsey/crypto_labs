@@ -1,5 +1,6 @@
 #include "algo.h"
 #include <iostream>
+#include <algorithm>
 
 
 crypto::text
@@ -26,19 +27,7 @@ crypto::vigenere::encrypt(
     key  ext_k = k;
     ext_k.expand(pt_size);
 
-    text cypher_text;
-    cypher_text.resize(pt_size);
-
-    for (std::size_t i = 0; i < pt_size; i++)
-    {
-        if (al.is_belongs({ plain_text[i] }) == false){
-            throw std::runtime_error("Byte '" + byte_to_hex(plain_text[i]) + "' is not belongs to alphabet!");
-        }
-
-        cypher_text[i] = al.direct_conv(plain_text[i], ext_k[i]);
-    }    
-
-    return cypher_text;
+    return al.vector_conv(plain_text, ext_k, alph::conv_t::direct);
 }
 
 crypto::text
@@ -65,29 +54,60 @@ crypto::vigenere::decrypt(
     key  ext_k = k;
     ext_k.expand(ct_size);
 
-    text plain_text;
-    plain_text.resize(ct_size);
+    return al.vector_conv(ext_k, cypher_text, alph::conv_t::reverse);
+}
 
-    for (std::size_t i = 0; i < ct_size; i++)
+crypto::text
+crypto::autokey_v2::encrypt(
+    const text &plain_text, const key &key)
+{
+    std::size_t key_size = key.size();
+    crypto::key cur_key       = key;
+    text        cypher;
+
+    vigenere vigenere_cypher(this->al);
+
+    for (auto pt_iter = plain_text.cbegin(); pt_iter != plain_text.cend(); /**/)
     {
-        if (al.is_belongs({ cypher_text[i] }) == false){
-            throw std::runtime_error("Byte '" + byte_to_hex(plain_text[i]) + "' is not belongs to alphabet!");
+        /* 
+            Remaining unencrypted length of plain text.
+        */
+        std::size_t rem_len =  static_cast<std::size_t>(plain_text.cend() - pt_iter);
+        /* 
+           Size of chunk is the min of remaining length 
+           and key size.
+        */
+        std::size_t size_of_chunk = std::min(rem_len, key_size);
+
+        text pt_chunk(pt_iter, pt_iter + size_of_chunk);
+
+        cur_key  = vigenere_cypher.encrypt(pt_chunk, cur_key);
+        cypher  += cur_key;
+        pt_iter += size_of_chunk;
+    }
+
+    return cypher;
+}
+
+crypto::text
+crypto::autokey_v2::decrypt(
+    const text &cypher_text, const key &key)
+{
+    std::size_t key_size = key.size();
+    text        plain_text;
+
+    plain_text += al.vector_conv(key, cypher_text, alph::conv_t::reverse);
+
+    if (key_size < cypher_text.size())
+    {
+        for (auto c_iter = cypher_text.cbegin(); c_iter != cypher_text.cend() - key_size; c_iter++)
+        {
+        plain_text += { al.reverse_conv(*c_iter, *(c_iter + key_size)) };
         }
-        
-        plain_text[i] = al.reverse_conv(ext_k[i], cypher_text[i]);
-    }    
+    }
 
     return plain_text;
 }
-
-// crypto::text
-// crypto::autokey_v2::encrypt(
-//     const text &plain_text, const key &k)
-// {
-//     vigenere vig_obj(al);
-
-//     key new_key(vig_obj.encrypt(plain_text, k));
-// }
 
 bool
 crypto::key::expand( std::size_t new_size )

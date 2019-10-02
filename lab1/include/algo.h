@@ -8,7 +8,7 @@ namespace crypto
         key( file &f ) : text(f) {}
         key( const text &t ) : text(t) {}
         key( const std::initializer_list<byte> &init_l ) : text(init_l) {}
-        key( const std::string &s ) : text(s) {}
+        key( const std::string &s ) { this->assign(s.begin(), s.end()); }
 
         bool expand( std::size_t new_size );
     };
