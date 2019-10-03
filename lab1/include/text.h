@@ -18,7 +18,8 @@ namespace crypto
         text( const text::const_iterator &, const text::const_iterator & );
         text( const std::string & );
 
-        void from_file( file & );
+        void    from_file( file & );
+        text    first_bytes( const std::size_t& ) const; 
 
         /* Concatanation of two texts */
         text& operator+=( const text & );

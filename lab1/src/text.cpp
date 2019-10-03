@@ -45,6 +45,12 @@ crypto::text::from_file(file &fd)
     fd.setstate(state_flags);   
 }
 
+crypto::text
+crypto::text::first_bytes( const std::size_t &len ) const
+{
+    return text(this->cbegin(), this->cbegin() + std::min(len, this->size()));
+}
+
 crypto::fdict
 crypto::get_freq( const text &t )
 {

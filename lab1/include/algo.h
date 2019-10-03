@@ -41,5 +41,8 @@ namespace crypto
 
         text encrypt( const text&, const key& );
         text decrypt( const text&, const key& );
+
+        /* Decrypts bytes after first 'key_size' */
+        text decrypt( const text&, const std::size_t key_size );
     };
 };
