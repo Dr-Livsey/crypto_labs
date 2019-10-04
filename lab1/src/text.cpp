@@ -1,6 +1,8 @@
 #include "text.h"
 #include "file.h"
+#include "nlohmann/json.hpp"
 #include <iomanip>
+#include <algorithm>
 
 crypto::text::text( file &fd )
 {
@@ -51,14 +53,6 @@ crypto::text::first_bytes( const std::size_t &len ) const
     return text(this->cbegin(), this->cbegin() + std::min(len, this->size()));
 }
 
-crypto::fdict
-crypto::get_freq( const text &t )
-{
-    fdict retval;
-    for (auto c : t) retval[c] += 1; 
-    return retval;
-}
-
 std::string 
 byte_to_hex( const crypto::byte &b )
 {
@@ -76,6 +70,14 @@ crypto::text::operator+=( const crypto::text &rhs )
     return *this;
 }
 
+crypto::text
+crypto::text::operator+( const crypto::text &rhs )
+{
+    text result(*this);
+    result.insert(result.end(), rhs.begin(), rhs.end());
+    return result;
+}
+
 // Operations with output stream
 std::ostream& 
 operator<<( std::ostream& stream, const crypto::text& obj)
@@ -84,17 +86,5 @@ operator<<( std::ostream& stream, const crypto::text& obj)
     {
         stream << *i;
     }
-    return stream;
-}
-
-std::ostream& 
-operator<<( std::ostream& stream, const crypto::fdict& obj)
-{
-    stream << "{";
-    for (auto i = obj.begin(); i != obj.end(); i++) 
-    {
-        stream << "\n\t\"" << byte_to_hex(i->first) << "\" : " << i->second << ",";
-    }
-    stream << "\n}";
     return stream;
 }

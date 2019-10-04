@@ -1,13 +1,11 @@
 #include <vector>
-#include <set>
-#include <map>
+#include <string>
 
 namespace crypto
 {
     class file;
 
-    using byte  = unsigned char;
-    using fdict = std::map<byte, unsigned>; 
+    using byte         = unsigned char;
     
     class text : public std::vector<byte>
     {
@@ -23,12 +21,11 @@ namespace crypto
 
         /* Concatanation of two texts */
         text& operator+=( const text & );
+        text operator+( const text & );
     };
 
-    fdict get_freq( const text& );
 };
 
 std::string byte_to_hex( const crypto::byte &b );
 
 std::ostream& operator<<( std::ostream&, const crypto::text& );
-std::ostream& operator<<( std::ostream&, const crypto::fdict& );

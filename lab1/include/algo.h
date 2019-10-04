@@ -3,6 +3,8 @@
 
 namespace crypto
 {
+    class fdict;
+    
     struct key : public text
     {
         key( file &f ) : text(f) {}
@@ -45,4 +47,6 @@ namespace crypto
         /* Decrypts bytes after first 'key_size' */
         text decrypt( const text&, const std::size_t key_size );
     };
+
+    text frequency_method( const text&, const alph&, const fdict& );
 };

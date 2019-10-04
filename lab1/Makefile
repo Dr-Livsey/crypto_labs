@@ -4,7 +4,8 @@ CXX_FLAGS := -Wall -Wextra -std=c++17 -ggdb
 BIN		:= bin
 SRC		:= src
 
-INCLUDE	:= -Iinclude
+INCLUDE	:= -Iinclude \
+		   -I/home/boris/cpp_json/include
 
 LIB		:= -Llib
 

@@ -1,7 +1,7 @@
 #include "algo.h"
+#include "fdict.h"
 #include <iostream>
 #include <algorithm>
-
 
 crypto::text
 crypto::vigenere::encrypt( 
@@ -121,6 +121,17 @@ crypto::autokey_v2::decrypt(
     }
 
     return plain_text;
+}
+
+crypto::text
+crypto::frequency_method( const text &cypher, const alph &alph, const fdict &pt_freq )
+{
+    auto pt_sorted_vec = pt_freq.as_sorted_vector();
+    auto ct_sorted_vec = fdict::get_freq(cypher).as_sorted_vector();
+    
+
+
+    return text();
 }
 
 bool
