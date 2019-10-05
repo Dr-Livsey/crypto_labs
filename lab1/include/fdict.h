@@ -19,7 +19,7 @@ namespace crypto
         fdict( const text& );
         fdict( void ) : std::map<byte, double>() {}
 
-        static fdict get_freq( const text&, unsigned n = 1 );
+        static fdict get_freq( const text& );
 
         void from_text( const text& );
 
