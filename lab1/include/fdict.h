@@ -7,6 +7,7 @@ using json = nlohmann::json;
 namespace crypto
 {
     class text;
+    class alph;
 
     using byte = unsigned char;
 
@@ -22,6 +23,10 @@ namespace crypto
         static fdict get_freq( const text& );
 
         void from_text( const text& );
+
+        alph keys( void ) const;
+
+        pair_t get_most_frequent( void ) const;
 
         // Represent std::map as json format
         nlohmann::json as_json( void ) const;

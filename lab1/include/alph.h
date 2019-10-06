@@ -11,13 +11,14 @@ namespace crypto
     {
     public:
 
-        using containter = std::vector<byte>;
+        using container = std::vector<byte>;
 
         enum conv_t{
             direct,
             reverse
         };
 
+        alph( void ) : container() {}
         alph( const text& );
 
         void from_text( const text& );
@@ -31,8 +32,6 @@ namespace crypto
 
         bool is_belongs( const std::vector<byte> &) const;
 
-    private:
-        alph( void ) {}
     };
 };
 

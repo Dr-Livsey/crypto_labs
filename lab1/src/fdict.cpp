@@ -1,4 +1,5 @@
 #include "fdict.h"
+#include "alph.h"
 #include "text.h"
 #include <sstream>
 #include <iostream>
@@ -26,6 +27,56 @@ crypto::fdict::as_json( void ) const
     ss << *this;
 
     return json::parse(ss.str());
+}
+
+crypto::fdict
+crypto::fdict::get_freq( const text &t )
+{
+    fdict  retval;
+    double text_size = static_cast<double>(t.size());
+
+    for (auto c : t) retval[c] += 1.; 
+
+    for ( auto it = retval.cbegin(); it != retval.cend(); it++)
+    {
+        retval[it->first] = it->second / text_size;
+    }
+
+    return retval;
+}
+
+crypto::fdict::sorted_fvec_t 
+crypto::fdict::as_sorted_vector( void ) const
+{
+    //Put items from dictionary to vector
+    sorted_fvec_t freq_vector(this->cbegin(), this->cend());
+
+    // Sort frequences by value
+    std::sort(freq_vector.begin(), freq_vector.end(), []( const fdict::pair_t &a, const fdict::pair_t &b) -> bool
+    {
+        return a.second < b.second;
+    });
+
+    return freq_vector;
+}
+
+crypto::alph
+crypto::fdict::keys( void ) const
+{
+    alph keys;
+    for ( auto p : *this ){
+        keys.push_back(p.first);
+    }
+    return keys;
+}
+
+crypto::fdict::pair_t
+crypto::fdict::get_most_frequent( void ) const
+{
+    if (this->empty())
+        return pair_t();
+
+    return this->as_sorted_vector().back();
 }
 
 std::ostream& 
@@ -58,35 +109,4 @@ operator<<( std::ostream& stream, const crypto::fdict& obj)
     stream << freq_dict.dump(4);
 
     return stream;
-}
-
-crypto::fdict
-crypto::fdict::get_freq( const text &t )
-{
-    fdict  retval;
-    double text_size = static_cast<double>(t.size());
-
-    for (auto c : t) retval[c] += 1.; 
-
-    for ( auto it = retval.cbegin(); it != retval.cend(); it++)
-    {
-        retval[it->first] = it->second / text_size;
-    }
-
-    return retval;
-}
-
-crypto::fdict::sorted_fvec_t 
-crypto::fdict::as_sorted_vector( void ) const
-{
-    //Put items from dictionary to vector
-    sorted_fvec_t freq_vector(this->cbegin(), this->cend());
-
-    // Sort frequences by value
-    std::sort(freq_vector.begin(), freq_vector.end(), []( const fdict::pair_t &a, const fdict::pair_t &b) -> bool
-    {
-        return a.second < b.second;
-    });
-
-    return freq_vector;
 }

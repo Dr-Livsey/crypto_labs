@@ -2,7 +2,7 @@
 #include "text.h"
 #include <algorithm>
 
-crypto::alph::alph( const text &init_t ) : containter(init_t)
+crypto::alph::alph( const text &init_t ) : container(init_t)
 {
     from_text(init_t);
 }

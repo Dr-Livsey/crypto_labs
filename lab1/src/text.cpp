@@ -63,6 +63,23 @@ byte_to_hex( const crypto::byte &b )
     return "0x" + ss.str();
 }
 
+crypto::text::slices
+crypto::text::split( const std::size_t &size ) const
+{
+    slices retval;
+
+    for ( std::size_t i = 0; i < this->size(); i += size )
+    {
+        auto cur_pos = this->begin() + i;
+
+        text slice(cur_pos, cur_pos + std::min(size, this->size() - size * i));
+
+        retval.push_back(slice);
+    }
+
+    return retval;
+}
+
 crypto::text&
 crypto::text::operator+=( const crypto::text &rhs )
 {

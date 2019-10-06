@@ -3,6 +3,8 @@
 #include <iostream>
 #include <algorithm>
 
+#include "file.h"
+
 crypto::text
 crypto::vigenere::encrypt( 
     const text &plain_text, const key &k)
@@ -123,15 +125,45 @@ crypto::autokey_v2::decrypt(
     return plain_text;
 }
 
-crypto::text
-crypto::frequency_method( const text &cypher, const alph &alph, const fdict &pt_freq )
+crypto::key
+crypto::frequency_method( const text &cypher, const std::size_t &key_size, const fdict &pt_freq )
 {
-    auto pt_sorted_vec = pt_freq.as_sorted_vector();
-    auto ct_sorted_vec = fdict::get_freq(cypher).as_sorted_vector();
+    /* 
+        Divide cypher text into slices equal to length of the key
+        and push it to the vector 
+    */
+    text::slices cypher_slices = cypher.split(key_size);
+
+    alph pt_alph = pt_freq.keys();
+
+    // Obtain index of the most frequent byte in the plain text
+    byte most_frequent = pt_freq.get_most_frequent().first;
+
+    // Getting global index - index of the most frequent byte in !plain text!
+    byte global_index = pt_alph.index(most_frequent);
+
+    key result;
+
+    for ( std::size_t column = 0; column < key_size; column++ )
+    {
+        text column_bytes;
+        for ( size_t j = 0; j < cypher_slices.size() ; j++ )
+        {    
+            if (column < cypher_slices.at(j).size())
+                column_bytes.push_back(cypher_slices.at(j).at(column));
+        }
+
+        // Getting local index - index of the most frequent byte in 'column'
+        fdict column_freq(column_bytes);
     
+        byte local_index = pt_alph.index(column_freq.get_most_frequent().first);
 
+        std::size_t offset = (local_index - global_index + pt_alph.size()) % pt_alph.size();
 
-    return text();
+        result.push_back(pt_alph.at(offset));
+    }
+
+    return result;
 }
 
 bool

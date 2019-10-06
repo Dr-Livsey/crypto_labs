@@ -10,6 +10,8 @@ namespace crypto
     class text : public std::vector<byte>
     {
     public:
+        using slices = std::vector<text>;
+
         text( void ) : std::vector<byte>() {}
         text( file & );
         text( const std::initializer_list<byte> & );
@@ -18,6 +20,8 @@ namespace crypto
 
         void    from_file( file & );
         text    first_bytes( const std::size_t& ) const; 
+
+        slices split( const std::size_t & ) const;
 
         /* Concatanation of two texts */
         text& operator+=( const text & );

@@ -7,6 +7,7 @@ namespace crypto
     
     struct key : public text
     {
+        key( void ) : text() {}
         key( file &f ) : text(f) {}
         key( const text &t ) : text(t) {}
         key( const std::initializer_list<byte> &init_l ) : text(init_l) {}
@@ -48,5 +49,5 @@ namespace crypto
         text decrypt( const text&, const std::size_t key_size );
     };
 
-    text frequency_method( const text&, const alph&, const fdict& );
+    key frequency_method( const text&, const std::size_t&, const fdict& );
 };
