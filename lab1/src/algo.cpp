@@ -64,7 +64,7 @@ crypto::autokey_v2::encrypt(
     const text &plain_text, const key &key)
 {
     std::size_t key_size = key.size();
-    crypto::key cur_key       = key;
+    crypto::key cur_key  = key;
     text        cypher;
 
     vigenere vigenere_cypher(this->al);
@@ -100,29 +100,48 @@ crypto::autokey_v2::decrypt(
 
     plain_text += al.vector_conv(key, cypher_text, alph::conv_t::reverse);
 
-    if (key_size < cypher_text.size())
-    {
-        plain_text += this->decrypt(cypher_text, key.size());
-    }
-
-    return plain_text;
+    return text();
 }
 
 crypto::text
 crypto::autokey_v2::decrypt(
-    const text &cypher_text, const std::size_t key_size)
+    const text &cypher_text, const std::size_t &key_size, const fdict &pt_freq)
 {
-    text plain_text;
-
     if (key_size >= cypher_text.size())
         throw  std::runtime_error("Key size >= Cypher text size");
 
-    for (auto c_iter = cypher_text.cbegin(); c_iter != cypher_text.cend() - key_size; c_iter++)
-    {
-        plain_text += { al.reverse_conv(*c_iter, *(c_iter + key_size)) };
+    text plain_part;
+
+    for (auto c_iter = cypher_text.cbegin(); c_iter != (cypher_text.cend() - key_size); c_iter++){
+        plain_part += { al.reverse_conv(*c_iter, *(c_iter + key_size)) };
     }
 
-    return plain_text;
+    alph pt_alph = pt_freq.keys();
+
+    text::slices keys;
+    text::slices ct_slices = cypher_text.split(key_size);  
+    text::slices pp_slices = plain_part.split(key_size);
+
+    // bori + pery = svkh
+    // s gr + bori + pery = ovsb
+    //------------------------
+    // pery = svkh - bori
+    // s gr + bori + (svkh - bori) = ovsb
+    // s gr + svkh = ovsb
+    // pery =  
+
+    std::cout << pt_alph.vector_conv(text("bori"), text("svkh"), alph::conv_t::reverse);
+
+    // for ( std::size_t idx = 1; idx < ct_slices.size(); idx++)
+    // {
+    //     key cur_key = pt_alph.vector_conv(pp_slices[idx - 1], ct_slices[idx], alph::conv_t::reverse);
+    //     keys.push_back(cur_key);
+
+    //     std::cout << cur_key << std::endl;
+    // }
+
+
+    return text();
 }
 
 crypto::key
@@ -165,6 +184,7 @@ crypto::frequency_method( const text &cypher, const std::size_t &key_size, const
 
     return result;
 }
+
 
 bool
 crypto::key::expand( std::size_t new_size )
