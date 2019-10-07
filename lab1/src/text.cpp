@@ -72,7 +72,7 @@ crypto::text::split( const std::size_t &size ) const
     {
         auto cur_pos = this->begin() + i;
 
-        text slice(cur_pos, cur_pos + std::min(size, this->size() - size * i));
+        text slice(cur_pos, cur_pos + std::min(size, this->size() - i));
 
         retval.push_back(slice);
     }
