@@ -110,3 +110,34 @@ operator<<( std::ostream& stream, const crypto::fdict& obj)
 
     return stream;
 }
+
+std::ostream& 
+operator<<( std::ostream& stream, const crypto::fdict::sorted_fvec_t& obj)
+{
+    stream << "{";
+    for (auto i = obj.begin(); i != obj.end(); i++) 
+    {
+        std::string byte_str = byte_to_hex(i->first);
+
+        std::stringstream ss;
+
+        if (i->first == '\n'){ 
+            ss << "\\n";
+        }
+        else if (i->first == '\r'){
+            ss << "\\r";
+        }
+        else if (i->first == '\t'){
+            ss << "\\t";
+        }
+        else{
+            ss << i->first;
+        }
+
+        stream << "\n\t\"" << byte_str << "\": {" << "\n\t\t\"ASCII char\"\t: \'" << ss.str() << "\',\n\t\t\"value\"\t: " << i->second << "\n\t},";
+    }
+
+    stream << "\n}";
+
+    return stream;
+}

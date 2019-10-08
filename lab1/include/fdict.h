@@ -36,3 +36,4 @@ namespace crypto
 };
 
 std::ostream& operator<<( std::ostream&, const crypto::fdict& );
+std::ostream& operator<<( std::ostream&, const crypto::fdict::sorted_fvec_t& );
