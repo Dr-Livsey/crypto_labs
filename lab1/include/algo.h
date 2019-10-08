@@ -16,9 +16,9 @@ namespace crypto
         bool expand( std::size_t new_size );
     };
 
-    struct algorithm
+    struct cypher
     {
-        algorithm( const alph &init_al) : al(init_al) {}
+        cypher( const alph &init_al) : al(init_al) {}
 
         virtual text encrypt( const text &, const key& ) = 0;
         virtual text decrypt( const text &, const key& ) = 0;
@@ -30,17 +30,17 @@ namespace crypto
         alph al;
     };
 
-    struct vigenere : public algorithm
+    struct vigenere : public cypher
     {
-        vigenere( const alph &init_al) : algorithm(init_al) {}
+        vigenere( const alph &init_al) : cypher(init_al) {}
 
         text encrypt( const text&, const key& );
         text decrypt( const text&, const key& );
     };
 
-    struct autokey_v2 : public algorithm
+    struct autokey_v2 : public cypher
     {
-        autokey_v2( const alph &init_al) : algorithm(init_al) {}
+        autokey_v2( const alph &init_al) : cypher(init_al) {}
 
         text encrypt( const text&, const key& );
         text decrypt( const text&, const key& );
