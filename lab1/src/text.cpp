@@ -47,9 +47,36 @@ crypto::text::from_file(file &fd)
     fd.setstate(state_flags);   
 }
 
+crypto::text::const_iterator
+crypto::text::find( const text &subtext, const std::size_t &n_pos ) const
+{
+    using bytestr = std::basic_string<byte>;
+    
+    bytestr str(cbegin(), cend());
+    bytestr substr(subtext.begin(), subtext.end());
+
+    std::size_t pos = str.find(substr, n_pos);
+    
+    return ((pos == bytestr::npos) ? end() : begin() + pos);
+}
+
+crypto::text::distances
+crypto::text::find_all( const text &subtext ) const
+{
+    distances dist;
+    for (auto it = find(subtext); it != cend(); it = find(subtext, it - cbegin() + 1)){
+        dist.push_back(it - cbegin());
+    }
+    return dist;
+}
+
 crypto::text
 crypto::text::first_bytes( const std::size_t &len ) const
 {
+    if (this->empty()){
+        return text();
+    }
+    
     return text(this->cbegin(), this->cbegin() + std::min(len, this->size()));
 }
 
@@ -78,6 +105,42 @@ crypto::text::split( const std::size_t &size ) const
     }
 
     return retval;
+}
+
+crypto::text::slices
+crypto::text::as_ngrams( const std::size_t &n ) const
+{
+    slices ngrams;
+    for (auto it = this->cbegin(); it != this->cend(); it++)
+    {    
+        if (this->end() - it >= static_cast<text::iterator::difference_type>(n)){
+            ngrams.emplace_back(it, it + n);
+        }
+        else break;
+    }
+
+    std::sort(ngrams.begin(), ngrams.end(), []( const text &a, const text &b){
+        std::basic_string<byte> a_bstr(a.begin(), a.end());
+        std::basic_string<byte> b_bstr(b.begin(), b.end());
+        
+        return a_bstr > b_bstr;
+    });
+
+    auto erase_from = std::unique(
+        ngrams.begin(), 
+        ngrams.end(), 
+        []( const text &a, const text &b )
+        {
+            std::basic_string<byte> a_bstr(a.begin(), a.end());
+            std::basic_string<byte> b_bstr(b.begin(), b.end());
+            
+            return a_bstr == b_bstr;
+        });
+
+    // Remove duplicate ngrams
+    ngrams.erase(erase_from, ngrams.end());
+
+    return ngrams;
 }
 
 crypto::text&

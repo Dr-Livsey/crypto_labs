@@ -98,17 +98,29 @@ crypto::autokey_v2::decrypt(
     std::size_t key_size = key.size();
     text        plain_text;
 
+    if (key_size > cypher_text.size())
+        throw  std::runtime_error("Key size must be <= Cypher text size");
+    
     plain_text += al.vector_conv(key, cypher_text, alph::conv_t::reverse);
 
-    return text();
+    if (key_size < cypher_text.size())
+    {
+        for (auto c_iter = cypher_text.cbegin(); c_iter != (cypher_text.cend() - key_size); c_iter++){
+            plain_text += { al.reverse_conv(*c_iter, *(c_iter + key_size)) };
+        }
+    }
+
+    return plain_text;
 }
 
 crypto::text
 crypto::autokey_v2::decrypt(
     const text &cypher_text, const std::size_t &key_size, const fdict &pt_freq)
 {
-    if (key_size >= cypher_text.size())
-        throw  std::runtime_error("Key size >= Cypher text size");
+    throw std::runtime_error("Not implemented");
+
+    if (key_size > cypher_text.size())
+        throw  std::runtime_error("Key size must be <= Cypher text size");
 
     text plain_part;
 
@@ -122,15 +134,10 @@ crypto::autokey_v2::decrypt(
     text::slices ct_slices = cypher_text.split(key_size);  
     text::slices pp_slices = plain_part.split(key_size);
 
-    // bori + pery = svkh
-    // s gr + bori + pery = ovsb
-    //------------------------
-    // pery = svkh - bori
-    // s gr + bori + (svkh - bori) = ovsb
-    // s gr + svkh = ovsb
-    // pery =  
+    std::cout << pt_freq.as_sorted_vector() << std::endl;
+    std::cout << fdict::get_freq(cypher_text).as_sorted_vector() << std::endl;
 
-    std::cout << pt_alph.vector_conv(text("bori"), text("svkh"), alph::conv_t::reverse);
+    //std::cout << pt_alph.vector_conv(text("keap"), text("bori"), alph::conv_t::direct);
 
     // for ( std::size_t idx = 1; idx < ct_slices.size(); idx++)
     // {
@@ -145,7 +152,7 @@ crypto::autokey_v2::decrypt(
 }
 
 crypto::key
-crypto::frequency_method( const text &cypher, const std::size_t &key_size, const fdict &pt_freq )
+crypto::algorithms::frequency_method( const text &cypher, const std::size_t &key_size, const fdict &pt_freq )
 {
     /* 
         Divide cypher text into slices equal to length of the key
@@ -185,6 +192,41 @@ crypto::frequency_method( const text &cypher, const std::size_t &key_size, const
     return result;
 }
 
+std::size_t
+crypto::algorithms::kasiski_method(const text &txt, const std::size_t &n)
+{
+    std::unordered_map<std::size_t, std::size_t> all_gcd;
+
+    for ( auto cur_ngram : txt.as_ngrams(n) )
+    {
+        // Find all distances
+        text::distances dist_vec = txt.find_all(cur_ngram);
+        // Min. three occurances
+        if ( dist_vec.size() < 3){
+            continue;
+        }
+        // Find GCD between all occurences of current ngram
+        std::size_t result = dist_vec[1] - dist_vec[0];
+
+        for (std::size_t i = 1; i < dist_vec.size(); i++){
+            result = std::gcd(result, dist_vec[i] - dist_vec[0]);
+        }
+
+        all_gcd[result] += 1;
+    }
+
+    // Find most frequent GCD
+    std::size_t max_frequency = 0, result_gcd = 0;
+    for (auto pair : all_gcd) 
+    {
+        if (pair.second > max_frequency) {
+            max_frequency = pair.second;
+            result_gcd    = pair.first;
+        }
+    }
+     
+    return result_gcd;
+}
 
 bool
 crypto::key::expand( std::size_t new_size )
@@ -216,13 +258,13 @@ crypto::key::expand( std::size_t new_size )
 }
 
 void
-crypto::algorithm::set_alph( const alph &new_al)
+crypto::cypher::set_alph( const alph &new_al)
 {
     this->al = new_al;
 }
 
 crypto::alph
-crypto::algorithm::get_alph( void ) const
+crypto::cypher::get_alph( void ) const
 {
     return this->al;
 }

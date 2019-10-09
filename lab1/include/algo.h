@@ -49,6 +49,10 @@ namespace crypto
         text decrypt( const text &, const std::size_t&, const fdict & );
     };
 
-    // Apply to Vigenere cypher
-    key frequency_method( const text&, const std::size_t&, const fdict& );
+    namespace algorithms
+    {
+        key frequency_method( const text&, const std::size_t&, const fdict& );
+
+        std::size_t kasiski_method( const text&, const std::size_t& n = 3 );
+    };
 };
