@@ -53,6 +53,10 @@ namespace crypto
     {
         key frequency_method( const text&, const std::size_t&, const fdict& );
 
+        key friedman2_method( const text&, const std::size_t&, const alph& );
+
+        double get_mut_match_index( const text&, const text& );
+
         std::size_t kasiski_method( const text&, const std::size_t& n = 3 );
     };
 };

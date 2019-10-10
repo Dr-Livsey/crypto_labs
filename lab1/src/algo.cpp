@@ -3,8 +3,6 @@
 #include <iostream>
 #include <algorithm>
 
-#include "file.h"
-
 crypto::text
 crypto::vigenere::encrypt( 
     const text &plain_text, const key &k)
@@ -190,6 +188,93 @@ crypto::algorithms::frequency_method( const text &cypher, const std::size_t &key
     }
 
     return result;
+}
+
+crypto::key 
+crypto::algorithms::friedman2_method( const text &cypher_text, const std::size_t &key_size, const crypto::alph &pt_alph )
+{
+    if (key_size < 2){
+        throw std::runtime_error("Key size must be > 1");
+    }
+
+    text::slices cypher_slices = cypher_text.split(key_size);
+    text::slices columns;
+
+    // Each column corresponds to appropriate key byte
+    for ( std::size_t column = 0; column < key_size; column++ )
+    {
+        text column_bytes;
+        for ( size_t j = 0; j < cypher_slices.size() ; j++ )
+        {    
+            if (column < cypher_slices.at(j).size())
+                column_bytes.push_back(cypher_slices.at(j).at(column));
+        }
+        columns.push_back(column_bytes);
+    }
+
+    std::map<byte, byte> shift_map = {{0, 0}};
+
+    //Find the mutual match index for each column with first
+    for ( std::size_t i = 1; i < columns.size(); i++)
+    {
+        std::vector<double> match_indexes;
+
+        double max_match_idx = 0.;
+        byte   max_shift     = 0;
+
+        for ( byte offset = 0; offset < (pt_alph.size() / 2); offset++)
+        {
+            double cur_match_idx = get_mut_match_index(columns[0], columns[i].right_shift(offset, pt_alph));
+
+            if (cur_match_idx > max_match_idx){
+                max_shift = offset;
+                max_match_idx = cur_match_idx;
+            }
+        }
+
+        std::cout << +max_shift << std::endl;
+        shift_map[i] = max_shift;
+    }
+
+    for ( auto alph_it = pt_alph.cbegin(); alph_it != pt_alph.cend(); alph_it++ )
+    {
+        text local_key;
+        for ( std::size_t i = 0; i < key_size; i++){
+            local_key += { pt_alph.left_shift(*alph_it, shift_map[i])};
+        }
+
+        std::cout << local_key << std::endl;
+    }
+
+    return key();
+}
+
+double 
+crypto::algorithms::get_mut_match_index( const text &ltext, const text &rtext )
+{
+    fdict   max_freq = fdict::get_freq(ltext);
+    fdict   min_freq = fdict::get_freq(rtext);
+
+    if (max_freq.size() < min_freq.size()){
+        max_freq.swap(min_freq);
+    }
+
+    alph    min_alph = min_freq.keys(); 
+
+    double retval    = 0.;
+
+    for ( auto it = min_alph.cbegin(); it != min_alph.cend(); it++ )
+    {
+        if ( max_freq.find(*it) != max_freq.end() )
+        {
+            double mint_fvalue = min_freq.at(*it);
+            double maxt_fvalue = max_freq.at(*it);
+
+            retval += mint_fvalue * maxt_fvalue;
+        }
+    }
+
+    return retval;
 }
 
 std::size_t
