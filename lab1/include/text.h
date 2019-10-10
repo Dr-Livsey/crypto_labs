@@ -4,6 +4,7 @@
 namespace crypto
 {
     class file;
+    class alph;
 
     using byte = unsigned char;
     
@@ -24,6 +25,13 @@ namespace crypto
 
         const_iterator find( const text&, const std::size_t& n_pos = 0 ) const;
         distances      find_all( const text & ) const;
+
+        /* 
+            Shift text by alphabet. 
+            Text alph. must belongs to input alphabet. 
+        */
+        text        left_shift( const byte& , const alph& ) const;
+        text        right_shift( const byte& , const alph& ) const;
 
         slices      split( const std::size_t & ) const;
         slices      as_ngrams( const std::size_t &) const;

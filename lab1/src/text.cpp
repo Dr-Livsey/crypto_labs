@@ -1,5 +1,6 @@
 #include "text.h"
 #include "file.h"
+#include "alph.h"
 #include "nlohmann/json.hpp"
 #include <iomanip>
 #include <algorithm>
@@ -141,6 +142,30 @@ crypto::text::as_ngrams( const std::size_t &n ) const
     ngrams.erase(erase_from, ngrams.end());
 
     return ngrams;
+}
+
+crypto::text 
+crypto::text::left_shift( const byte &offset ,const alph &al ) const
+{
+    text shifted_text;
+
+    for ( auto it = this->cbegin(); it != this->cend(); it++ ){
+        shifted_text += { al.left_shift(*it, offset) } ;
+    }
+
+    return shifted_text;
+}
+
+crypto::text 
+crypto::text::right_shift( const byte &offset ,const alph &al ) const
+{
+    text shifted_text;
+
+    for ( auto it = this->cbegin(); it != this->cend(); it++ ){
+        shifted_text += { al.right_shift(*it, offset) } ;
+    }
+
+    return shifted_text;
 }
 
 crypto::text&

@@ -30,6 +30,18 @@ crypto::alph::from_text( const text &init_t )
     erase(std::unique(this->begin(), this->end()), this->end());
 }
 
+crypto::byte 
+crypto::alph::left_shift( const byte &b, const byte &offset) const
+{
+    return this->at((index(b) + offset) % size());
+}
+
+crypto::byte 
+crypto::alph::right_shift( const byte &b, const byte &offset) const
+{
+    return this->at((index(b) - offset + size()) % size());
+}
+
 crypto::byte
 crypto::alph::direct_conv(byte plain_byte, byte key_byte) const
 {
