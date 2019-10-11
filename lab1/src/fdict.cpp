@@ -84,6 +84,8 @@ operator<<( std::ostream& stream, const crypto::fdict& obj)
 {
     json freq_dict;
 
+    freq_dict["size"] = obj.size();
+
     for (auto i = obj.begin(); i != obj.end(); i++) 
     {
         std::string byte_str = byte_to_hex(i->first);
@@ -115,6 +117,12 @@ std::ostream&
 operator<<( std::ostream& stream, const crypto::fdict::sorted_fvec_t& obj)
 {
     stream << "{";
+    stream << "\n\t\"" << "size" << "\": " << obj.size();
+
+    if (obj.empty() == false){
+        stream << ",";
+    }
+
     for (auto i = obj.begin(); i != obj.end(); i++) 
     {
         std::string byte_str = byte_to_hex(i->first);
@@ -134,7 +142,12 @@ operator<<( std::ostream& stream, const crypto::fdict::sorted_fvec_t& obj)
             ss << i->first;
         }
 
-        stream << "\n\t\"" << byte_str << "\": {" << "\n\t\t\"ASCII char\"\t: \'" << ss.str() << "\',\n\t\t\"value\"\t: " << i->second << "\n\t},";
+        stream << "\n\t\"" << byte_str << "\": {" << "\n\t\t\"ASCII char\"\t: \"" << ss.str() << "\",\n\t\t\"value\"\t: " << i->second << "\n\t}";
+
+        // If not last element, put the comma
+        if ( i + 1 != obj.end() ){
+            stream << ",";
+        }
     }
 
     stream << "\n}";
