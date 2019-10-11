@@ -44,19 +44,26 @@ namespace crypto
 
         text encrypt( const text&, const key& );
         text decrypt( const text&, const key& );
-
-        /* Decrypts bytes using frequency */
-        text decrypt( const text &, const std::size_t&, const fdict & );
     };
 
     namespace algorithms
     {
         key frequency_method( const text&, const std::size_t&, const fdict& );
 
-        key friedman2_method( const text&, const std::size_t&, const alph& );
+        std::vector<crypto::key> friedman2_method( const text&, const std::size_t&, const alph& );
 
         double get_mut_match_index( const text&, const text& );
 
         std::size_t kasiski_method( const text&, const std::size_t& n = 3 );
     };
 };
+
+std::ostream& 
+operator<<( std::ostream& stream, const std::vector<crypto::key>& obj)
+{
+    for (auto i = obj.begin(); i != obj.end(); i++) 
+    {
+        stream << *i << std::endl;
+    }
+    return stream;
+}

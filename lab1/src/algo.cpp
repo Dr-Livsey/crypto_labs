@@ -111,44 +111,6 @@ crypto::autokey_v2::decrypt(
     return plain_text;
 }
 
-crypto::text
-crypto::autokey_v2::decrypt(
-    const text &cypher_text, const std::size_t &key_size, const fdict &pt_freq)
-{
-    throw std::runtime_error("Not implemented");
-
-    if (key_size > cypher_text.size())
-        throw  std::runtime_error("Key size must be <= Cypher text size");
-
-    text plain_part;
-
-    for (auto c_iter = cypher_text.cbegin(); c_iter != (cypher_text.cend() - key_size); c_iter++){
-        plain_part += { al.reverse_conv(*c_iter, *(c_iter + key_size)) };
-    }
-
-    alph pt_alph = pt_freq.keys();
-
-    text::slices keys;
-    text::slices ct_slices = cypher_text.split(key_size);  
-    text::slices pp_slices = plain_part.split(key_size);
-
-    std::cout << pt_freq.as_sorted_vector() << std::endl;
-    std::cout << fdict::get_freq(cypher_text).as_sorted_vector() << std::endl;
-
-    //std::cout << pt_alph.vector_conv(text("keap"), text("bori"), alph::conv_t::direct);
-
-    // for ( std::size_t idx = 1; idx < ct_slices.size(); idx++)
-    // {
-    //     key cur_key = pt_alph.vector_conv(pp_slices[idx - 1], ct_slices[idx], alph::conv_t::reverse);
-    //     keys.push_back(cur_key);
-
-    //     std::cout << cur_key << std::endl;
-    // }
-
-
-    return text();
-}
-
 crypto::key
 crypto::algorithms::frequency_method( const text &cypher, const std::size_t &key_size, const fdict &pt_freq )
 {
@@ -190,7 +152,7 @@ crypto::algorithms::frequency_method( const text &cypher, const std::size_t &key
     return result;
 }
 
-crypto::key 
+std::vector<crypto::key>
 crypto::algorithms::friedman2_method( const text &cypher_text, const std::size_t &key_size, const crypto::alph &pt_alph )
 {
     if (key_size < 2){
@@ -222,6 +184,7 @@ crypto::algorithms::friedman2_method( const text &cypher_text, const std::size_t
         double max_match_idx = 0.;
         byte   max_shift     = 0;
 
+        // Find offset with max match index
         for ( byte offset = 0; offset < (pt_alph.size() / 2); offset++)
         {
             double cur_match_idx = get_mut_match_index(columns[0], columns[i].right_shift(offset, pt_alph));
@@ -232,21 +195,23 @@ crypto::algorithms::friedman2_method( const text &cypher_text, const std::size_t
             }
         }
 
-        std::cout << +max_shift << std::endl;
         shift_map[i] = max_shift;
     }
 
+    std::vector<key> keys;
+
     for ( auto alph_it = pt_alph.cbegin(); alph_it != pt_alph.cend(); alph_it++ )
     {
-        text local_key;
+        text cur_key;
+        
+        // Shift all key bytes by offsets in shift_map relative to first byte
         for ( std::size_t i = 0; i < key_size; i++){
-            local_key += { pt_alph.left_shift(*alph_it, shift_map[i])};
+            cur_key += { pt_alph.left_shift(*alph_it, shift_map[i])};
         }
-
-        std::cout << local_key << std::endl;
+        keys.push_back(cur_key);
     }
 
-    return key();
+    return keys;
 }
 
 double 
