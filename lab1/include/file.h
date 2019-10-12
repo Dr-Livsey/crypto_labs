@@ -9,7 +9,7 @@ namespace crypto
     public:
 
         file( 
-            const char *, 
+            const std::string &, 
             std::ios::openmode _openmode = (std::ios::in | std::ios::binary) 
         );
         ~file();

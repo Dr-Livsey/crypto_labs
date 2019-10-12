@@ -318,3 +318,13 @@ crypto::cypher::get_alph( void ) const
 {
     return this->al;
 }
+
+std::ostream& 
+operator<<( std::ostream& stream, const std::vector<crypto::key>& obj)
+{
+    for (auto i = obj.begin(); i != obj.end(); i++) 
+    {
+        stream << *i << std::endl;
+    }
+    return stream;
+}

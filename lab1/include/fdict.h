@@ -6,6 +6,7 @@ using json = nlohmann::json;
 
 namespace crypto
 {
+    class file;
     class text;
     class alph;
 
@@ -17,6 +18,7 @@ namespace crypto
         using pair_t        = std::pair<fdict::key_type, double>;
         using sorted_fvec_t = std::vector<pair_t>;
 
+        fdict( file& );
         fdict( const text& );
         fdict( void ) : std::map<byte, double>() {}
 

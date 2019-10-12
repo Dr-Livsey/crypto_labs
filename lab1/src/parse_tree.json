@@ -1,0 +1,35 @@
+{
+    "encrypt" : {
+        "1" : "file",
+        "2" : "key",
+        "3" : "algo",
+        "4" : "dest"
+    },
+    "decrypt" : {
+        "1" : "file",
+        "2" : "key",
+        "3" : "algo",
+        "4" : "dest",
+        "5" : "alph file"
+    },
+    "friedman" : {
+        "1" : "file",
+        "2" : "key size",
+        "3" : "dest",
+        "4" : "alph file"
+    },
+    "frequency" : {
+        "1" : "file",
+        "2" : "key size",
+        "3" : "alph file"
+    },
+    "kasiski" : {
+        "1" : "file",
+        "2" : "ngrams size"
+    },
+    "alph" : {
+        "1" : "file",
+        "2" : "dest (*.json)"
+    },
+    "help" : ""
+}

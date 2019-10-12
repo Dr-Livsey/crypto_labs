@@ -18,6 +18,7 @@ namespace crypto
 
     struct cypher
     {
+        cypher() = default;
         cypher( const alph &init_al) : al(init_al) {}
 
         virtual text encrypt( const text &, const key& ) = 0;
@@ -26,20 +27,26 @@ namespace crypto
         void set_alph( const alph & );
         alph get_alph( void ) const;
 
+        virtual ~cypher() = default;
+
     protected:
         alph al;
     };
 
     struct vigenere : public cypher
     {
+        vigenere() : cypher() {}
         vigenere( const alph &init_al) : cypher(init_al) {}
 
         text encrypt( const text&, const key& );
         text decrypt( const text&, const key& );
+
+        ~vigenere() = default;
     };
 
     struct autokey_v2 : public cypher
     {
+        autokey_v2() : cypher() {}
         autokey_v2( const alph &init_al) : cypher(init_al) {}
 
         text encrypt( const text&, const key& );
@@ -58,12 +65,4 @@ namespace crypto
     };
 };
 
-std::ostream& 
-operator<<( std::ostream& stream, const std::vector<crypto::key>& obj)
-{
-    for (auto i = obj.begin(); i != obj.end(); i++) 
-    {
-        stream << *i << std::endl;
-    }
-    return stream;
-}
+std::ostream& operator<<( std::ostream&, const std::vector<crypto::key>& );

@@ -2,7 +2,7 @@
 #include "file.h"
 #include <iostream>
 
-crypto::file::file( const char *path, std::ios::openmode _openmode ) 
+crypto::file::file( const std::string &path, std::ios::openmode _openmode ) 
                 : std::fstream(path, _openmode), opmode(_openmode)
 {
     if (is_open() == false)

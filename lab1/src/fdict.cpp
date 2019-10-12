@@ -1,6 +1,8 @@
 #include "fdict.h"
 #include "alph.h"
 #include "text.h"
+#include "file.h"
+
 #include <sstream>
 #include <iostream>
 
@@ -8,6 +10,22 @@
 crypto::fdict::fdict( const text &t )
 {
     from_text(t);
+}
+
+crypto::fdict::fdict( file &json_file )
+{
+    json j_freqs;
+
+    json_file >> j_freqs;
+
+    for ( auto it = j_freqs.begin(); it != j_freqs.end(); it++ )
+    {
+        if ("size" != it.key())
+        {
+            crypto::byte b = static_cast<crypto::byte>(std::stoul(it.key().c_str(), nullptr, 16));
+            (*this)[b] = (*it)["value"];
+        }
+    }
 }
 
 void 
