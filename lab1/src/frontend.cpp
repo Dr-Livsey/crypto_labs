@@ -101,7 +101,7 @@ frontend::execute_command( const parser::value_map &val_map)
         // Using Kasiski method to set the key size
         if ( key_size_field == "" || key_size_field == "use kasiski" ){
             std::cout << "Using Kasiski method" << std::endl;
-            std::cout << "\t" << "ngrams size" << "\t\t\t# ";
+            std::cout << "\t" << "\"ngrams size\"\n\t" << "# ";
             std::getline(std::cin, key_size_field);
 
             std::size_t n = std::stoul(key_size_field.c_str());
