@@ -51,6 +51,7 @@ namespace crypto
 
         text encrypt( const text&, const key& );
         text decrypt( const text&, const key& );
+        text decrypt( const text&, const std::size_t& );
     };
 
     namespace algorithms

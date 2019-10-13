@@ -111,6 +111,25 @@ crypto::autokey_v2::decrypt(
     return plain_text;
 }
 
+crypto::text
+crypto::autokey_v2::decrypt(
+    const text &cypher_text, const std::size_t &key_size)
+{
+    text        plain_text;
+    
+    if (key_size < cypher_text.size())
+    {
+        // Copy first key_size bytes
+        plain_text.insert(plain_text.end(), cypher_text.begin(), cypher_text.begin() + key_size);
+
+        for (auto c_iter = cypher_text.cbegin(); c_iter != (cypher_text.cend() - key_size); c_iter++){
+            plain_text += { al.reverse_conv(*c_iter, *(c_iter + key_size)) };
+        }
+    }
+
+    return plain_text;
+}
+
 crypto::key
 crypto::algorithms::frequency_method( const text &cypher, const std::size_t &key_size, const fdict &pt_freq )
 {
@@ -247,12 +266,16 @@ crypto::algorithms::kasiski_method(const text &txt, const std::size_t &n)
 {
     std::unordered_map<std::size_t, std::size_t> all_gcd;
 
+    if (n == 0){
+        throw std::runtime_error("ngrams length must be > 0");
+    }
+
     for ( auto cur_ngram : txt.as_ngrams(n) )
     {
         // Find all distances
         text::distances dist_vec = txt.find_all(cur_ngram);
         // Min. three occurances
-        if ( dist_vec.size() < 3){
+        if ( dist_vec.size() < 2){
             continue;
         }
         // Find GCD between all occurences of current ngram

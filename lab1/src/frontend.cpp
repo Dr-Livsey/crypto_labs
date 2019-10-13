@@ -46,67 +46,58 @@ frontend::execute_command( const parser::value_map &val_map)
 {
     // Set general parameters
     crypto::file input_file(val_map.at("file"));
+    std::string  method = val_map.at("method");
     
     // Read input text
     crypto::text  input_text(input_file);
 
-    if (val_map.at("method") == "encrypt" || val_map.at("method") == "decrypt")
+    if (method == "encrypt")
     {
-        crypto::cypher *cypher_ptr = nullptr;
-
-        // Select the algorithm
         std::string algo = val_map.at("algo");
-        if (std::regex_match(algo, std::regex("vig.*"))){
-            cypher_ptr = new crypto::vigenere();
-        }
-        else if (std::regex_match(algo, std::regex("auto.*"))){
-            cypher_ptr = new crypto::autokey_v2();
-        }
-        else {
-            throw std::runtime_error("Unknown method of decryption (encryption)");
-        }
 
         // Set alphabet
-        crypto::alph alph;
-        if ( val_map.at("method") == "encrypt" )
-        {
-            alph = crypto::fdict::get_freq(input_text).keys();
-        }
-        else {
-            // Take it from *.json file
-            crypto::file json_file(val_map.at("alph file"));
-            alph = crypto::fdict(json_file).keys();
-        }
-
-        cypher_ptr->set_alph(alph);
+        crypto::alph alph = crypto::fdict::get_freq(input_text).keys();
 
         //Set key
         crypto::key key;
-        /* If key is empty, use predefined key (21, 3, 7, 11, 23) */
         if ( val_map.at("key") == "" )
         {
-            std::cout << "Using predefined key:\n";          
-            if ( alph.size() < 24 ){
-                throw std::runtime_error("Alphabet is too small to use predefined key.");
+            // If Vigenere use predefined key use predefined key (21, 3, 7, 11, 23)
+            if ( std::regex_match(algo, std::regex("vig.*")) )
+            {
+                std::cout << "Using predefined key:\n";          
+                if ( alph.size() < 24 ){
+                    throw std::runtime_error("Alphabet is too small to use predefined key.");
+                }
+                else{
+                    key = { alph.at(21), alph.at(3), alph.at(7), alph.at(11), alph.at(23) };
+                    std::cout << "(21, 3, 7, 11, 23) = " << key << std::endl;
+                } 
             }
-            else{
-                key = { alph.at(21), alph.at(3), alph.at(7), alph.at(11), alph.at(23) };
-                std::cout << "(21, 3, 7, 11, 23) = " << key << std::endl;
-            } 
         }
         else {
             key = val_map.at("key");
         }
-    
-        crypto::text output;
-        if ( val_map.at("method") == "encrypt" ){
-            output = cypher_ptr->encrypt(input_text, key);
-        }
-        else {
-            output = cypher_ptr->decrypt(input_text, key);
+
+        if (key.empty()){
+            throw std::runtime_error("Key is empty!");
         }
 
-        delete cypher_ptr;
+        // Select the algorithm
+        crypto::text output;
+        if (std::regex_match(algo, std::regex("vig.*")))
+        {
+            crypto::vigenere vigenere_cypher(alph);
+            output = vigenere_cypher.encrypt(input_text, key);
+        }
+        else if (std::regex_match(algo, std::regex("auto.*")))
+        {
+            crypto::autokey_v2 autokey_cypher(alph);
+            output = autokey_cypher.encrypt(input_text, key);
+        }
+        else {
+            throw std::runtime_error("Unknown method of decryption (encryption)");
+        }
 
         // Putting the result into output file
         crypto::file output_file(val_map.at("dest"), std::ios::out | std::ios::binary);
@@ -114,8 +105,76 @@ frontend::execute_command( const parser::value_map &val_map)
 
         std::cout << "Output was putted in \"" << val_map.at("dest") << "\"" << std::endl;
     }
-    else if ( val_map.at("method") == "friedman" ||
-              val_map.at("method") == "frequency" )
+    else if (method == "decrypt")
+    {
+        std::string algo = val_map.at("algo");
+
+        // Set alphabet
+        // Take it from *.json file
+        crypto::file json_file(val_map.at("alph file"));
+        crypto::alph alph = crypto::fdict(json_file).keys();
+
+        //Set key
+        crypto::key key;
+        if ( val_map.at("key") == "" )
+        {
+            // If Vigenere use predefined key use predefined key (21, 3, 7, 11, 23)
+            if ( std::regex_match(algo, std::regex("vig.*")) )
+            {
+                std::cout << "Using predefined key:\n";          
+                if ( alph.size() < 24 ){
+                    throw std::runtime_error("Alphabet is too small to use predefined key.");
+                }
+                else{
+                    key = { alph.at(21), alph.at(3), alph.at(7), alph.at(11), alph.at(23) };
+                    std::cout << "(21, 3, 7, 11, 23) = " << key << std::endl;
+                } 
+            }
+        }
+        else {
+            key = val_map.at("key");
+        }
+
+        // Select the algorithm
+        crypto::text output;
+        if (std::regex_match(algo, std::regex("vig.*")))
+        {
+            if (key.empty()){
+                throw std::runtime_error("Key is empty!");
+            }
+
+            crypto::vigenere vigenere_cypher(alph);
+            output = vigenere_cypher.decrypt(input_text, key);
+        }
+        else if (std::regex_match(algo, std::regex("auto.*")))
+        {
+            crypto::autokey_v2 autokey_cypher(alph);
+
+            // If key is empty generate length
+            if (key.empty())
+            {
+                std::srand(std::time(nullptr)); 
+                std::size_t key_size = 3 + std::rand() % 8;
+                std::cout << "Key size = " << key_size << " was generated\n";
+ 
+                output = autokey_cypher.decrypt(input_text, key_size);
+            }
+            else {
+                output = autokey_cypher.decrypt(input_text, key);
+            }
+        }
+        else {
+            throw std::runtime_error("Unknown method of decryption (encryption)");
+        }
+    
+        // Putting the result into output file
+        crypto::file output_file(val_map.at("dest"), std::ios::out | std::ios::binary);
+        output_file << output;
+
+        std::cout << "Output was putted in \"" << val_map.at("dest") << "\"" << std::endl;
+    }
+    else if ( method == "friedman" ||
+              method == "frequency" )
     {
         std::string key_size_field = val_map.at("key size");
         std::size_t key_size;
@@ -148,7 +207,7 @@ frontend::execute_command( const parser::value_map &val_map)
         crypto::fdict input_freqs = json_file;
         
         // Select the algorithm
-        if (val_map.at("method") == "friedman")
+        if (method == "friedman")
         {
             std::vector<crypto::key> keys = crypto::algorithms::friedman2_method(input_text, key_size, input_freqs.keys());
 
@@ -161,7 +220,7 @@ frontend::execute_command( const parser::value_map &val_map)
             std::cout << "Key : " << crypto::algorithms::frequency_method(input_text, key_size, input_freqs) << std::endl;
         }
     }
-    else if ( val_map.at("method") == "kasiski" )
+    else if ( method == "kasiski" )
     {
         std::size_t n = 3;
         if ( val_map.at("ngrams size") == "" ){
@@ -172,7 +231,7 @@ frontend::execute_command( const parser::value_map &val_map)
         }
         std::cout << "Key size : " << crypto::algorithms::kasiski_method(input_text, n) << std::endl;
     }
-    else if ( val_map.at("method") == "alph" )
+    else if ( method == "alph" )
     {
         crypto::fdict freqs(input_text);
 
