@@ -52,12 +52,10 @@ frontend::execute_command( const parser::value_map &val_map)
 
     if (val_map.at("method") == "encrypt" || val_map.at("method") == "decrypt")
     {
-        crypto::key  key(val_map.at("key"));
-        std::string  algo = val_map.at("algo");
-        
         crypto::cypher *cypher_ptr = nullptr;
-        
+
         // Select the algorithm
+        std::string algo = val_map.at("algo");
         if (std::regex_match(algo, std::regex("vig.*"))){
             cypher_ptr = new crypto::vigenere();
         }
@@ -68,19 +66,43 @@ frontend::execute_command( const parser::value_map &val_map)
             throw std::runtime_error("Unknown method of decryption (encryption)");
         }
 
-        crypto::text output;
+        // Set alphabet
+        crypto::alph alph;
         if ( val_map.at("method") == "encrypt" )
         {
-            // Use alphabet of plain text
-            cypher_ptr->set_alph(crypto::fdict::get_freq(input_text).keys());
+            alph = crypto::fdict::get_freq(input_text).keys();
+        }
+        else {
+            // Take it from *.json file
+            crypto::file json_file(val_map.at("alph file"));
+            alph = crypto::fdict(json_file).keys();
+        }
+
+        cypher_ptr->set_alph(alph);
+
+        //Set key
+        crypto::key key;
+        /* If key is empty, use predefined key (21, 3, 7, 11, 23) */
+        if ( val_map.at("key") == "" )
+        {
+            std::cout << "Using predefined key:\n";          
+            if ( alph.size() < 24 ){
+                throw std::runtime_error("Alphabet is too small to use predefined key.");
+            }
+            else{
+                key = { alph.at(21), alph.at(3), alph.at(7), alph.at(11), alph.at(23) };
+                std::cout << "(21, 3, 7, 11, 23) = " << key << std::endl;
+            } 
+        }
+        else {
+            key = val_map.at("key");
+        }
+    
+        crypto::text output;
+        if ( val_map.at("method") == "encrypt" ){
             output = cypher_ptr->encrypt(input_text, key);
         }
-        else 
-        {
-            crypto::file json_file(val_map.at("alph file"));
-
-            // Use alphabet from *.json file
-            cypher_ptr->set_alph(crypto::fdict(json_file).keys());
+        else {
             output = cypher_ptr->decrypt(input_text, key);
         }
 
@@ -99,12 +121,19 @@ frontend::execute_command( const parser::value_map &val_map)
         std::size_t key_size;
 
         // Using Kasiski method to set the key size
-        if ( key_size_field == "" || key_size_field == "use kasiski" ){
+        if ( key_size_field == "" || key_size_field == "use kasiski" )
+        {
             std::cout << "Using Kasiski method" << std::endl;
             std::cout << "\t" << "\"ngrams size\"\n\t" << "# ";
             std::getline(std::cin, key_size_field);
 
-            std::size_t n = std::stoul(key_size_field.c_str());
+            std::size_t n = 3;
+            if ( key_size_field == "" ){
+                std::cout << "By default, using ngrams size = 3\n";
+            }
+            else {
+                n = std::stoul(key_size_field);
+            }
 
             key_size = crypto::algorithms::kasiski_method(input_text, n);
             std::cout << "Key size : " << key_size << std::endl;
@@ -128,14 +157,19 @@ frontend::execute_command( const parser::value_map &val_map)
 
             std::cout << "Keys was putted in \"" << val_map.at("dest") << "\"" << std::endl;
         }
-        else
-        {
+        else{
             std::cout << "Key : " << crypto::algorithms::frequency_method(input_text, key_size, input_freqs) << std::endl;
         }
     }
     else if ( val_map.at("method") == "kasiski" )
     {
-        std::size_t n = std::stoul(val_map.at("ngrams size"));
+        std::size_t n = 3;
+        if ( val_map.at("ngrams size") == "" ){
+            std::cout << "By default, using ngrams size = 3\n";
+        }
+        else {
+            n = std::stoul(val_map.at("ngrams size"));
+        }
         std::cout << "Key size : " << crypto::algorithms::kasiski_method(input_text, n) << std::endl;
     }
     else if ( val_map.at("method") == "alph" )
