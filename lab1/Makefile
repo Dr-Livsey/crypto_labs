@@ -20,8 +20,18 @@ LIBRARIES	:=
 			   
 EXECUTABLE	:= main
 
+LIBTEXT_PATH:= ..
+
 
 all: $(OBJ_DIR) $(BIN_DIR) $(OBJ) $(BIN_DIR)/$(EXECUTABLE)
+
+text_lib: $(OBJ_DIR)
+	@echo "Create 'Text' static library..."
+	$(CXX) $(CXX_FLAGS) $(INCLUDE)  $(SRC_DIR)/file.cpp  -o $(OBJ_DIR)/file.o
+	$(CXX) $(CXX_FLAGS) $(INCLUDE)  $(SRC_DIR)/alph.cpp  -o $(OBJ_DIR)/alph.o
+	$(CXX) $(CXX_FLAGS) $(INCLUDE)  $(SRC_DIR)/fdict.cpp -o $(OBJ_DIR)/fdict.o
+	$(CXX) $(CXX_FLAGS) $(INCLUDE)  $(SRC_DIR)/text.cpp  -o $(OBJ_DIR)/text.o
+	ar rcs $(LIBTEXT_PATH)/libtext.a $(OBJ_DIR)/{file.o,alph.o,fdict.o,text.o}
 
 $(OBJ_DIR):
 	@echo "Creating obj dir"
@@ -32,10 +42,10 @@ $(BIN_DIR):
 	@mkdir $(BIN_DIR)
 
 $(OBJ): $(OBJ_DIR)/%.o:  $(SRC_DIR)/%.cpp
-	$(CXX) $(CXX_FLAGS) $(INCLUDE) $(LIB) $^ -o $@ $(LIBRARIES)
+	$(CXX) $(CXX_FLAGS) $(INCLUDE) $^ -o $@
 
 $(BIN_DIR)/$(EXECUTABLE): $(OBJ)
-	$(CXX) $^ -o $@
+	$(CXX) $(LIB) $^ -o $@ $(LIBRARIES)
 
 run: clean all
 	clear
@@ -46,3 +56,4 @@ clean:
 
 cleanall: clean
 	rm -rf $(OBJ_DIR)
+	rm -f  $(LIBTEXT_PATH)/libtext.a
