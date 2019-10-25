@@ -33,6 +33,6 @@ namespace sp_cypher
 
     // SP-cyphering
     crypto::text encrypt( const key &, const crypto::text &, const subst & );
-
+    crypto::text decrypt( const key &, const crypto::text &, const subst & );
 
 };

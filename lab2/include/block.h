@@ -36,6 +36,7 @@ namespace sp_cypher
 
         subblocks_t  as_subblocks( const std::size_t ) const;
         crypto::text as_text( void ) const;
+        ulong        as_ulong( void) const;
 
         ~block() = default;
     };

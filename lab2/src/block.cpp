@@ -26,6 +26,9 @@ block::block( const subblock_t &subblock )
     /**/
 }
 
+/*
+ * @param subblock_s - each size of subblock in bits
+ */
 block::subblocks_t
 block::as_subblocks( const std::size_t subblock_s ) const
 {
@@ -74,6 +77,12 @@ block::as_text( void ) const
     }
 
     return result;
+}
+
+ulong
+block::as_ulong( void) const
+{
+    return std::stoul(to_string(), nullptr, 2);
 }
 
 // block& 
