@@ -1,9 +1,4 @@
-#include <iostream>
-#include "subst.h"
-#include "file.h"
-#include "algo.h"
-#include "text.h"
-
+#include "frontend.h"
 /* 
  * SP cyphering + whitening
  * d = 4
@@ -14,26 +9,21 @@
  ! P  = (9i + 5) mod 32 
  * 
 */
-
-/*
- * TODO:
- *  1. round_keys ( key : {0,1}^32) -> [ key, ~key, key, ~key, 1^32 ]
- *  2. s_subst ( block : {0, 1}^16) -> S-substitusion result
- *  3. p_transform ( block : {0, 1}^32) -> P-substitution result
- *  4.  
- */
-
-int main() 
+int main(int argc, char *argv[]) 
 {
-    using namespace sp_cypher;
-
-    crypto::text input_text("bori");
-    block b(input_text);
-
-    block p_t = p_transform(b);
-    block p_t_inv = p_transform_inv(p_t);
-
-    std::cout << p_t << std::endl;
-    std::cout << p_t_inv << std::endl;
-
+    return frontend::run(argc, argv);
 }
+
+    // crypto::file input_file("text.txt");
+    // crypto::text input_text = input_file;
+
+    // sp_cypher::key k("bori");
+    // sp_cypher::subst S("src/sub.json");
+
+    // crypto::text cypher = sp_cypher::encrypt(k, input_text, S);
+    // crypto::text decypher = sp_cypher::decrypt(k, cypher, S);
+
+    // crypto::file encr_file("encr_text.txt", std::ios::out | std::ios::binary);
+    // encr_file << cypher;
+    // crypto::file decr_file("decr_text.txt", std::ios::out | std::ios::binary);
+    // decr_file << decypher;
