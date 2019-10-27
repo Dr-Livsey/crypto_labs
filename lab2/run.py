@@ -1,7 +1,8 @@
 import threading
 import subprocess
-import filecmp
 
+
+from os              import path
 from pathlib         import Path
 from multiprocessing import Queue
 from math            import floor
@@ -27,6 +28,16 @@ def thread_encrypt_file(text : Path, key : Path, dest : Path, logerr_fd):
                     stdout=subprocess.PIPE, 
                     stderr=logerr_fd,
                     check=True)
+    
+# Compare first 'size' bytes of 'f1' file with 'f2' file 
+def cmp_files(f1, f2, size : int) -> bool:
+    f1_content = ""
+    f2_content = ""
+    with open(f1, "rb") as fd:
+        f1_content = fd.read()
+    with open(f2, "rb") as fd:
+        f2_content = fd.read()
+    return True if f1_content[:size] == f2_content[:size] else False
 
 # Worker function. Running in separate threades
 def worker( pid, queue : Queue, text_path : Path, encr_dest : Path, 
@@ -59,7 +70,7 @@ def worker( pid, queue : Queue, text_path : Path, encr_dest : Path,
                 thread_encrypt_file(encr_dest, key_j_file, decr_dest, logerr_fd)
 
                 # Compare key_i and key_j results
-                if filecmp.cmp(decr_dest, text_path) == True:
+                if cmp_files(text_path, decr_dest, path.getsize(text_path)) == True:
                     with open(log_dir/"semi-weak_keys.txt", "a") as fd:
                         fd.write("{},{}\n".format(i, j))              
                 j += 1
