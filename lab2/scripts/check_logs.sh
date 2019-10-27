@@ -1,11 +1,19 @@
 #!/bin/bash -e
 
-THREADS_DIR=$(readlink -e ../threads)
+PWD=$( cd "$(dirname "$0")" ; pwd -P )
+
+THREADS_DIR=$(readlink -e $PWD/../threads)
 
 for THREAD_FOLDER in $THREADS_DIR/*
 do
     if [ -e "$THREAD_FOLDER/log/semi-weak_keys.txt" ]
     then
-        echo "FOUND IN $THREAD_FOLDER"
+        echo "WEAK KEYS FOUND IN $THREAD_FOLDER"
     fi
+
+    THREAD_STDERR=$(cat $THREAD_FOLDER/log/stderr.txt)
+    if [ ! $THREAD_STDERR = "" ]
+    then
+        echo "ERROR FOUND IN $THREAD_FOLDER"
+    fi 
 done
