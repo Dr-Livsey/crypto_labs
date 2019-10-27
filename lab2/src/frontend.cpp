@@ -56,7 +56,14 @@ frontend::run(int argc, char *argv[])
         return frontend::run();
     else
     {
-        return execute_command(parser::parse(cmd_line, parser::ptype::forward));
+        try
+        {
+            return execute_command(parser::parse(cmd_line, parser::ptype::forward));
+        }
+        catch(const std::exception& e)
+        {
+            std::cerr << "(Exception): " << e.what() << '\n';
+        }
     }
 
     return EXIT_FAILURE;
@@ -75,7 +82,8 @@ frontend::execute_command( const parser::value_map &val_map)
     if (method == "encrypt" || method == "decrypt")
     {
         //Set key
-        sp_cypher::key key = val_map.at("key");
+        crypto::file key_file(val_map.at("key file"));
+        sp_cypher::key key = key_file;
 
         // Set S-substitution
         sp_cypher::subst S("src/sub.json");
