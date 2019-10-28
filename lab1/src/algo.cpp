@@ -101,11 +101,8 @@ crypto::autokey_v2::decrypt(
     
     plain_text += al.vector_conv(key, cypher_text, alph::conv_t::reverse);
 
-    if (key_size < cypher_text.size())
-    {
-        for (auto c_iter = cypher_text.cbegin(); c_iter != (cypher_text.cend() - key_size); c_iter++){
-            plain_text += { al.reverse_conv(*c_iter, *(c_iter + key_size)) };
-        }
+    for (auto c_iter = cypher_text.cbegin(); c_iter != (cypher_text.cend() - key_size); c_iter++){
+        plain_text += { al.reverse_conv(*c_iter, *(c_iter + key_size)) };
     }
 
     return plain_text;
@@ -116,15 +113,15 @@ crypto::autokey_v2::decrypt(
     const text &cypher_text, const std::size_t &key_size)
 {
     text        plain_text;
-    
-    if (key_size < cypher_text.size())
-    {
-        // Copy first key_size bytes
-        plain_text.insert(plain_text.end(), cypher_text.begin(), cypher_text.begin() + key_size);
 
-        for (auto c_iter = cypher_text.cbegin(); c_iter != (cypher_text.cend() - key_size); c_iter++){
+    if (key_size > cypher_text.size())
+        throw  std::runtime_error("Key size must be <= Cypher text size");
+    
+    // Copy first key_size bytes
+    plain_text.insert(plain_text.end(), cypher_text.begin(), cypher_text.begin() + key_size);
+
+    for (auto c_iter = cypher_text.cbegin(); c_iter != (cypher_text.cend() - key_size); c_iter++){
             plain_text += { al.reverse_conv(*c_iter, *(c_iter + key_size)) };
-        }
     }
 
     return plain_text;
