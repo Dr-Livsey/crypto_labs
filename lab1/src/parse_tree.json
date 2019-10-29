@@ -1,16 +1,16 @@
 {
     "encrypt" : {
         "1" : "file",
-        "2" : "key",
-        "3" : "algo",
-        "4" : "dest"
+        "2" : "algo",
+        "3" : "dest",
+        "4" : "key"
     },
     "decrypt" : {
         "1" : "file",
-        "2" : "key",
-        "3" : "algo",
-        "4" : "dest",
-        "5" : "alph file"
+        "2" : "algo",
+        "3" : "dest",
+        "4" : "alph file",
+        "5" : "key"
     },
     "friedman" : {
         "1" : "file",

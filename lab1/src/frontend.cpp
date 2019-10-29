@@ -66,13 +66,12 @@ frontend::execute_command( const parser::value_map &val_map)
             if ( std::regex_match(algo, std::regex("vig.*")) )
             {
                 std::cout << "Using predefined key:\n";          
-                if ( alph.size() < 24 ){
-                    throw std::runtime_error("Alphabet is too small to use predefined key.");
-                }
-                else{
-                    key = { alph.at(21), alph.at(3), alph.at(7), alph.at(11), alph.at(23) };
-                    std::cout << "(21, 3, 7, 11, 23) = " << key << std::endl;
-                } 
+                key = predefined_vigenere_key(alph);
+                std::cout << "(21, 3, 7, 11, 23) = " << key << std::endl;
+            }
+            else if ( std::regex_match(algo, std::regex("auto.*")) )
+            {
+                key = get_encrypt_autokey(alph);
             }
         }
         else {
@@ -112,7 +111,8 @@ frontend::execute_command( const parser::value_map &val_map)
         // Set alphabet
         // Take it from *.json file
         crypto::file json_file(val_map.at("alph file"));
-        crypto::alph alph = crypto::fdict(json_file).keys();
+        crypto::fdict input_freqs = json_file;
+        crypto::alph  alph = input_freqs.keys();
 
         //Set key
         crypto::key key;
@@ -122,13 +122,8 @@ frontend::execute_command( const parser::value_map &val_map)
             if ( std::regex_match(algo, std::regex("vig.*")) )
             {
                 std::cout << "Using predefined key:\n";          
-                if ( alph.size() < 24 ){
-                    throw std::runtime_error("Alphabet is too small to use predefined key.");
-                }
-                else{
-                    key = { alph.at(21), alph.at(3), alph.at(7), alph.at(11), alph.at(23) };
-                    std::cout << "(21, 3, 7, 11, 23) = " << key << std::endl;
-                } 
+                key = predefined_vigenere_key(alph);
+                std::cout << "(21, 3, 7, 11, 23) = " << key << std::endl;
             }
         }
         else {
@@ -142,25 +137,19 @@ frontend::execute_command( const parser::value_map &val_map)
             if (key.empty()){
                 throw std::runtime_error("Key is empty!");
             }
-
             crypto::vigenere vigenere_cypher(alph);
             output = vigenere_cypher.decrypt(input_text, key);
         }
         else if (std::regex_match(algo, std::regex("auto.*")))
         {
-            crypto::autokey_v2 autokey_cypher(alph);
-
             // If key is empty generate length
             if (key.empty())
             {
-                std::srand(std::time(nullptr)); 
-                std::size_t key_size = 3 + std::rand() % 8;
-                std::cout << "Key size = " << key_size << " was generated\n";
- 
-                output = autokey_cypher.decrypt(input_text, key_size);
+                autokey_break_the_cypher(input_freqs, input_text, val_map.at("dest"));
+                return EXIT_SUCCESS;
             }
             else {
-                output = autokey_cypher.decrypt(input_text, key);
+                output = crypto::autokey_v2(alph).decrypt(input_text, key);
             }
         }
         else {
@@ -242,6 +231,85 @@ frontend::execute_command( const parser::value_map &val_map)
     }
 
     return EXIT_SUCCESS;
+}
+
+void 
+frontend::autokey_break_the_cypher( crypto::fdict &input_freqs, crypto::text &cypher, const std::string &dest)
+{
+    std::srand(std::time(nullptr)); 
+
+    std::string user_input;
+    std::size_t key_size;
+
+    while ( user_input != "no")
+    {
+        // Generate key size
+        key_size = (1 + std::rand() % 10);
+        std::cout << "Key size = " << key_size << " was generated. ";
+
+        // Decrypt with autokey and put it into dest file
+        crypto::file output_file(dest, std::ios::out | std::ios::binary);
+        output_file << crypto::autokey_v2(input_freqs.keys()).decrypt(cypher, key_size);
+
+        std::cout << "Output was putted in \"" << dest << "\". Continue? (yes / no): "; output_file.close();
+        std::getline(std::cin, user_input);
+    }
+
+    std::cout << "Using Frequency method with key size = " << key_size << ". ";
+    std::cout << "Key = \""<< crypto::algorithms::frequency_method(cypher, key_size, input_freqs) << "\"" << std::endl;
+}
+
+crypto::key
+frontend::get_encrypt_autokey( const crypto::alph &al )
+{
+    std::srand(std::time(nullptr)); 
+    /*
+     *  Generate key by key_size while we don't 
+     *  obtain appropriate key (retval).
+     */
+    while (true)
+    {
+        std::string user_answer;
+        crypto::key retval;
+
+        // Generating key size and input the key
+        std::size_t key_size = (1 + std::rand() % 10);
+        std::cout << "Key size = " << key_size << " was generated. Enter the key: ";
+        std::getline(std::cin, user_answer);
+
+        /* Get first 'key_size' letters, which belongs to alphabet*/
+        crypto::text text_key(user_answer);
+            
+        for ( auto it = text_key.cbegin(); it < text_key.cend() && retval.size() < key_size; it++)
+        {
+            if ( al.is_belongs({ *it }) == true ){
+                retval += { *it };
+            }
+        }
+
+        if ( retval.size() != key_size ){
+            std::cout << " ( Exception ) Key does not fit to the key size. Try again." << std::endl;
+        }
+        else{
+            std::cout << "The key is \"" << retval << "\"" << std::endl;  
+            return retval;
+        }
+    }
+    
+    return crypto::key();
+}
+
+crypto::key 
+frontend::predefined_vigenere_key( const crypto::alph &al )
+{
+    const std::size_t idx_arr[] = { 21, 3, 7, 11, 23 }; 
+    crypto::key retval;
+
+    for ( std::size_t i = 0; i < sizeof(idx_arr) / sizeof(std::size_t); i++ ){
+        retval += { al.at(idx_arr[i] % al.size()) };
+    }
+
+    return retval;
 }
 
 parser::tokens
