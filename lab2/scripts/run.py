@@ -8,7 +8,8 @@ from shutil          import copyfile, rmtree
 from worker          import Worker
 
 parser = argparse.ArgumentParser(description="Finding weak & semi-weak keys of SP-cyphering")
-parser.add_argument("--keytype", "-t", type=str, required=True, help="Type of keys (weak or semi-weak)")
+parser.add_argument("--keytype", "-k", type=str, required=True, help="Type of keys (weak or semi-weak)")
+parser.add_argument("--threads", "-t", type=int, required=True, help="Amount of threads")
 args = parser.parse_args()
 
 # Path to plain text
@@ -16,7 +17,7 @@ GLOBAL_TEXT_PATH = Path("../text.txt")
 
 KEY_SPACE       = (2**32 - 1)
 # May be more, if KEY_SPACE not devided into full parts of THREAD_COUNT
-THREAD_COUNT  = 50
+THREAD_COUNT  = args.threads
 # Folder with THREAD logs etc.
 THREAD_FOLDER = Path("threads")
 
