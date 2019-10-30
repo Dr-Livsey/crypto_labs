@@ -31,7 +31,7 @@ text_lib: $(OBJ_DIR)
 	$(CXX) $(CXX_FLAGS) $(INCLUDE)  $(SRC_DIR)/alph.cpp  -o $(OBJ_DIR)/alph.o
 	$(CXX) $(CXX_FLAGS) $(INCLUDE)  $(SRC_DIR)/fdict.cpp -o $(OBJ_DIR)/fdict.o
 	$(CXX) $(CXX_FLAGS) $(INCLUDE)  $(SRC_DIR)/text.cpp  -o $(OBJ_DIR)/text.o
-	ar rcs $(LIBTEXT_PATH)/libtext.a $(OBJ_DIR)/{file.o,alph.o,fdict.o,text.o}
+	ar rcs $(LIBTEXT_PATH)/libtext.a $(OBJ_DIR)/file.o $(OBJ_DIR)/alph.o $(OBJ_DIR)/fdict.o $(OBJ_DIR)/text.o
 
 $(OBJ_DIR):
 	@echo "Creating obj dir"
