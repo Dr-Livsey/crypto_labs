@@ -368,10 +368,11 @@ parser::parse( const std::string &raw_line )
 void
 frontend::help()
 {
-    std::cout << "\tencrypt   - Encrypt file with Vigenere / Autokey v2 algorithm" << std::endl;
-    std::cout << "\tdecrypt   - Decrypt file with Vigenere / Autokey v2 algorithm" << std::endl;
+    std::cout << "\tencrypt   - Encrypt file with Vigenere / Autokey v2 algorithm (vigenere, autokey in menu)" << std::endl;
+    std::cout << "\tdecrypt   - Decrypt file with Vigenere / Autokey v2 algorithm (vigenere, autokey in menu)" << std::endl;
     std::cout << "\tfriedman  - Friedman Second method" << std::endl;
     std::cout << "\tfrequency - Apply frequency method to cypher" << std::endl;
     std::cout << "\tkasiski   - Search key size by using Kasiski method" << std::endl;
+    std::cout << "\talph      - Get frequencies of each symbol in file" << std::endl;
     std::cout << std::endl;
 }
