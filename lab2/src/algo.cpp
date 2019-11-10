@@ -92,9 +92,12 @@ sp_cypher::encrypt( const key &k, const crypto::text &plain_text, const subst &s
     // Divide plain text into slices
     crypto::text::slices ptext_slices   = plain_text.split(block_len_bytes);
  
-    // Add excess block with size of last text slice
-    block excess_block(block_len_bytes - ptext_slices.back().size());
-    ptext_slices.push_back(excess_block.as_text());
+    if (plain_text.size() % block_len_bytes != 0)
+    {
+        // Add excess block with size of last text slice
+        block excess_block(ptext_slices.back().size());
+        ptext_slices.push_back(excess_block.as_text());
+    }
 
     std::size_t ptext_slices_s = ptext_slices.size();
 
@@ -126,10 +129,10 @@ sp_cypher::encrypt( const key &k, const crypto::text &plain_text, const subst &s
              * 3. For each subblock use S-substitution
              */ 
             block sub_cur_block;
-            for ( auto subblock : cur_block.as_subblocks(SUBBLOCK_SIZE) )
+            for ( auto subblock : cur_block.as_subblocks() )
             {
                 sub_cur_block <<= SUBBLOCK_SIZE;
-                sub_cur_block |= sub(block(subblock));
+                sub_cur_block |= sub(subblock);
             }
             /*
              * 4. Use P-transorm function
@@ -208,10 +211,10 @@ sp_cypher::decrypt( const key &k, const crypto::text &cypher_text, const subst &
              * 3. For each subblock use inverse S-substitution
              */ 
             block sub_cur_block;
-            for ( auto subblock : cur_block.as_subblocks(SUBBLOCK_SIZE) )
+            for ( auto subblock : cur_block.as_subblocks() )
             {
                 sub_cur_block <<= SUBBLOCK_SIZE;
-                sub_cur_block |= inv_sub(block(subblock));
+                sub_cur_block |= inv_sub(subblock);
             }
             /*
              * 4. XOR current block with round key
@@ -228,11 +231,18 @@ sp_cypher::decrypt( const key &k, const crypto::text &cypher_text, const subst &
     /*
      * Delete excess zeroes if exist
      */
-    crypto::text excess_block_txt(plain_text.end() - block_len_bytes, plain_text.end());
+    {
+        // Get last block
+        crypto::text excess_block_txt(plain_text.end() - block_len_bytes, plain_text.end());
 
-    ulong excess_zeroes = block(excess_block_txt).as_ulong();
+        // Convert it to number
+        ulong excess_block_s = block(excess_block_txt).as_ulong();
 
-    plain_text.erase(plain_text.end() - (block_len_bytes + excess_zeroes), plain_text.end());
+        if (excess_block_s < 4)
+        {
+            plain_text.erase(plain_text.end() - (2 * block_len_bytes - excess_block_s), plain_text.end());
+        }
+    }
 
     std::cout << std::endl;
     return plain_text;

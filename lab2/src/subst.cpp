@@ -3,6 +3,7 @@
 
 #include <algorithm>
 #include <fstream>
+#include <iostream>
 
 using namespace sp_cypher;
 
@@ -26,22 +27,7 @@ subst::subst( const std::string &json_file )
 block 
 subst::operator()( const block &b ) const
 {
-    block result_block = b;
-
-    // Check sizes of arguments
-    if ( b.size() < this->size() ) {
-        throw std::runtime_error("subst() : Block size must be >= Subst. size");
-    }
-
-    for ( auto spair : *this )
-    {
-        unsigned from_index = spair.at(0);
-        unsigned to_index   = spair.at(1);
-
-        result_block[from_index] = b[to_index];
-    }
-
-    return result_block;
+    return block(this->at(b.as_ulong()).at(1).get<unsigned>());
 }
 /* 
  * Find inverse substitution.

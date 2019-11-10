@@ -30,12 +30,18 @@ block::block( const subblock_t &subblock )
  * @param subblock_s - each size of subblock in bits
  */
 block::subblocks_t
-block::as_subblocks( const std::size_t subblock_s ) const
+block::as_subblocks( void ) const
 {
-     if ( BLOCK_LEN % subblock_s != 0 )
+    return this->as_subblocks<SUBBLOCK_SIZE>();
+}
+
+template<std::size_t subblock_s> std::vector<std::bitset<subblock_s>>
+block::as_subblocks(void) const
+{
+    if ( BLOCK_LEN % SUBBLOCK_SIZE != 0 )
         throw std::runtime_error("^(): (BLOCK_LEN % subblock_s) must be equal to 0");
 
-    subblocks_t retval;
+    std::vector<std::bitset<subblock_s>> retval;
 
     std::string bstr = to_string();
     std::size_t chunk_size = subblock_s;
@@ -52,7 +58,7 @@ block::as_subblocks( const std::size_t subblock_s ) const
         retval.emplace_back(reversed_bstr);
     }
 
-    return retval;
+    return retval; 
 }
 
 block
@@ -72,7 +78,7 @@ block::as_text( void ) const
 {
     crypto::text result;
 
-    for ( auto subblock : as_subblocks(8) ){
+    for ( auto subblock : this->as_subblocks<8>()){
         result += { static_cast<crypto::byte>(std::stoul(subblock.to_string(), nullptr, 2)) };
     }
 
@@ -80,7 +86,7 @@ block::as_text( void ) const
 }
 
 ulong
-block::as_ulong( void) const
+block::as_ulong( void ) const
 {
     return std::stoul(to_string(), nullptr, 2);
 }

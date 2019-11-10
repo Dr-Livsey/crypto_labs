@@ -14,7 +14,7 @@ namespace sp_cypher
     const std::size_t ROUNDS        = 4;    /* d = 4  */
     const std::size_t BLOCK_LEN     = 32;   /* n = 32 */
     const std::size_t KEY_SIZE      = BLOCK_LEN;
-    const std::size_t SUBBLOCK_SIZE = 16;   /* m = 16 */
+    const std::size_t SUBBLOCK_SIZE = 4;   /* m = 16 */
 
     /* Base class of block*/
     using block_base_t = std::bitset<BLOCK_LEN>;
@@ -34,10 +34,12 @@ namespace sp_cypher
         block  operator^( const key &);
         // block& operator+( const subblock_t &);
 
-        subblocks_t  as_subblocks( const std::size_t ) const;
+        subblocks_t  as_subblocks( void ) const;
+        template< std::size_t subblock_s> std::vector<std::bitset<subblock_s>> as_subblocks( void ) const;
+
         crypto::text as_text( void ) const;
         ulong        as_ulong( void) const;
 
-        ~block() = default;
+        ~block() = default;        
     };
 };
