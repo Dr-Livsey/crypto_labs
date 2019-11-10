@@ -24,13 +24,10 @@ THREAD_FOLDER = Path("threads")
 part_size = floor(KEY_SPACE / THREAD_COUNT)
 remainder = KEY_SPACE - part_size * THREAD_COUNT
 
-# Increase THREAD_COUNT if remainder exists
-THREAD_COUNT += 1 if (remainder != 0) else 0
-
 # Multiprocess queue
 pqueue = Queue()
 
-range_finish = 0
+range_finish, range_start = 0, 0
 for i in range(0, THREAD_COUNT):
 
     # Calculate current range
@@ -39,11 +36,10 @@ for i in range(0, THREAD_COUNT):
     # Put it on the proc. queue
     pqueue.put([range_start, range_finish])
 
-    # Put the remainder on the top
-    if ( i == THREAD_COUNT - 2):
-        pqueue.put([range_finish + 1, range_finish + remainder])
-        break
-
+# If remainder is exist, put it on the top
+if (remainder != 0):
+    THREAD_COUNT += 1
+    pqueue.put([range_finish + 1, range_finish + remainder])
 
 # Create threads and prepare environment
 if (THREAD_FOLDER.exists()):

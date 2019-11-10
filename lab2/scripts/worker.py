@@ -73,9 +73,10 @@ class Worker(threading.Thread):
     # Finding weak keys
     def weak_keys_finding(self):
 
-        print("Thread #{} started. Run mode = {}".format(self._pid, self._run_mode))
-
         ranges     = self._queue.get()
+
+        print("Thread #{} started. Run mode = {}. Range = [{}, {}]".format(self._pid, self._run_mode, ranges[0], ranges[1]))
+
         key_i_file = self._keys_dir/"key_i.txt"
         # std error log file
         logerr_fd  = open(self._log_dir/"stderr.txt", "w")
@@ -85,15 +86,11 @@ class Worker(threading.Thread):
         try:
             counter = 0
             key_range_s = (ranges[1] - ranges[0] + 1)
-            while counter < key_range_s:
-                i = random.randint(ranges[0], ranges[1])
-                
-                with open(self._keys_dir/"checked.txt", "a") as fd:
-                    fd.write("{};".format(i))
-
+            cur_key = ranges[0]
+            while counter < key_range_s:                
                 # Write key into file
                 with open(key_i_file, "wb") as fd:
-                    fd.write(bytearray_from_int(i))
+                    fd.write(bytearray_from_int(cur_key))
 
                 Worker.encrypt_file(self._text_path, key_i_file, self._encr_dest, logerr_fd)
                 Worker.encrypt_file(self._encr_dest, key_i_file, self._decr_dest, logerr_fd)
@@ -101,15 +98,16 @@ class Worker(threading.Thread):
                 # Check results
                 if cmp_files(self._text_path, self._decr_dest, path.getsize(self._text_path)) == True:
                     with open(self._keys_dir/"weak.txt", "a") as fd:
-                        fd.write("{}\n".format(i))              
+                        fd.write("{}\n".format(cur_key))              
 
                 # Logging
                 if (self.get_time() - t_start)  >= 10.:
                     t_start = self.get_time()
                     per_proccessed = format((counter /  key_range_s) * 100, "0.8f")
-                    self._logger.info("Processed [{}%]. Current key: {}\n".format(per_proccessed, i))
+                    self._logger.info("Processed [{}%]. Current key: {}\n".format(per_proccessed, cur_key))
 
                 counter += 1
+                cur_key += 1
 
         except Exception as default_ex:
             logerr_fd.write("Exception: {}".format(default_ex))
