@@ -56,7 +56,8 @@ frontend::execute_command( const parser::value_map &val_map)
         std::string algo = val_map.at("algo");
 
         // Set alphabet
-        crypto::alph alph = crypto::fdict::get_freq(input_text).keys();
+        crypto::fdict input_freqs = crypto::fdict::get_freq(input_text);
+        crypto::alph alph = input_freqs.keys();
 
         //Set key
         crypto::key key;
@@ -99,10 +100,16 @@ frontend::execute_command( const parser::value_map &val_map)
         }
 
         // Putting the result into output file
-        crypto::file output_file(val_map.at("dest"), std::ios::out | std::ios::binary);
+        std::string outfile_name = (val_map.at("dest") == "") ? "encr.txt" : val_map.at("dest");
+
+        crypto::file output_file(outfile_name, std::ios::out | std::ios::binary);
         output_file << output;
 
-        std::cout << "Output was putted in \"" << val_map.at("dest") << "\"" << std::endl;
+        std::cout << "Output was putted in \"" << outfile_name << "\"" << std::endl;
+
+        // Save freqs into freqs.json
+        crypto::file freqs_file("freqs.json", std::ios::out | std::ios::binary);
+        freqs_file << input_freqs;
     }
     else if (method == "decrypt")
     {
@@ -110,7 +117,7 @@ frontend::execute_command( const parser::value_map &val_map)
 
         // Set alphabet
         // Take it from *.json file
-        crypto::file json_file(val_map.at("alph file"));
+        crypto::file json_file( (val_map.at("alph file") == "") ? "freqs.json" : val_map.at("alph file") );
         crypto::fdict input_freqs = json_file;
         crypto::alph  alph = input_freqs.keys();
 
@@ -130,6 +137,8 @@ frontend::execute_command( const parser::value_map &val_map)
             key = val_map.at("key");
         }
 
+        std::string outfile_name = (val_map.at("dest") == "") ? "decr.txt" : val_map.at("dest");
+
         // Select the algorithm
         crypto::text output;
         if (std::regex_match(algo, std::regex("vig.*")))
@@ -145,7 +154,7 @@ frontend::execute_command( const parser::value_map &val_map)
             // If key is empty generate length
             if (key.empty())
             {
-                autokey_break_the_cypher(input_freqs, input_text, val_map.at("dest"));
+                autokey_break_the_cypher(input_freqs, input_text, outfile_name);
                 return EXIT_SUCCESS;
             }
             else {
@@ -157,10 +166,10 @@ frontend::execute_command( const parser::value_map &val_map)
         }
     
         // Putting the result into output file
-        crypto::file output_file(val_map.at("dest"), std::ios::out | std::ios::binary);
+        crypto::file output_file(outfile_name, std::ios::out | std::ios::binary);
         output_file << output;
 
-        std::cout << "Output was putted in \"" << val_map.at("dest") << "\"" << std::endl;
+        std::cout << "Output was putted in \"" << outfile_name << "\"" << std::endl;
     }
     else if ( method == "friedman" ||
               method == "frequency" )
@@ -192,7 +201,7 @@ frontend::execute_command( const parser::value_map &val_map)
         }
 
         // Use alphabet from *.json file
-        crypto::file  json_file(val_map.at("alph file"));
+        crypto::file json_file( (val_map.at("alph file") == "") ? "freqs.json" : val_map.at("alph file") );
         crypto::fdict input_freqs = json_file;
         
         // Select the algorithm
@@ -200,10 +209,11 @@ frontend::execute_command( const parser::value_map &val_map)
         {
             std::vector<crypto::key> keys = crypto::algorithms::friedman2_method(input_text, key_size, input_freqs.keys());
 
-            crypto::file output_file(val_map.at("dest"), std::ios::out | std::ios::binary);
+            std::string outfile_name = val_map.at("dest") == "" ? "keys.txt" : val_map.at("dest");
+            crypto::file output_file(outfile_name, std::ios::out | std::ios::binary);
             output_file << keys;
 
-            std::cout << "Keys was putted in \"" << val_map.at("dest") << "\"" << std::endl;
+            std::cout << "Keys was putted in \"" << outfile_name << "\"" << std::endl;
         }
         else{
             std::cout << "Key : " << crypto::algorithms::frequency_method(input_text, key_size, input_freqs) << std::endl;
@@ -236,16 +246,12 @@ frontend::execute_command( const parser::value_map &val_map)
 void 
 frontend::autokey_break_the_cypher( crypto::fdict &input_freqs, crypto::text &cypher, const std::string &dest)
 {
-    std::srand(std::time(nullptr)); 
-
     std::string user_input;
     std::size_t key_size;
 
-    while ( user_input != "no")
+    for ( key_size = 1; key_size <= 10; key_size++)
     {
-        // Generate key size
-        key_size = (1 + std::rand() % 10);
-        std::cout << "Key size = " << key_size << " was generated. ";
+        std::cout << "Key size = " << key_size << ". ";
 
         // Decrypt with autokey and put it into dest file
         crypto::file output_file(dest, std::ios::out | std::ios::binary);
@@ -253,7 +259,11 @@ frontend::autokey_break_the_cypher( crypto::fdict &input_freqs, crypto::text &cy
 
         std::cout << "Output was putted in \"" << dest << "\". Continue? (yes / no): "; output_file.close();
         std::getline(std::cin, user_input);
+
+        if (user_input == "no") break;
     }
+
+    key_size = (key_size > 10) ? 10 : key_size;
 
     std::cout << "Using Frequency method with key size = " << key_size << ". ";
     std::cout << "Key = \""<< crypto::algorithms::frequency_method(cypher, key_size, input_freqs) << "\"" << std::endl;
@@ -267,13 +277,14 @@ frontend::get_encrypt_autokey( const crypto::alph &al )
      *  Generate key by key_size while we don't 
      *  obtain appropriate key (retval).
      */
+
     while (true)
     {
         std::string user_answer;
         crypto::key retval;
 
         // Generating key size and input the key
-        std::size_t key_size = (1 + std::rand() % 10);
+        std::size_t key_size = std::rand() % 2 ? 3 : 10;
         std::cout << "Key size = " << key_size << " was generated. Enter the key: ";
         std::getline(std::cin, user_answer);
 
