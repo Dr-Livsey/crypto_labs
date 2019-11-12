@@ -29,6 +29,7 @@ namespace crypto
         alph keys( void ) const;
 
         pair_t get_most_frequent( void ) const;
+        double get_delta( void ) const;
 
         // Represent std::map as json format
         nlohmann::json as_json( void ) const;

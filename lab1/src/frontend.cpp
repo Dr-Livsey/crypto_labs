@@ -207,7 +207,7 @@ frontend::execute_command( const parser::value_map &val_map)
         // Select the algorithm
         if (method == "friedman")
         {
-            std::vector<crypto::key> keys = crypto::algorithms::friedman2_method(input_text, key_size, input_freqs.keys());
+            std::vector<crypto::key> keys = crypto::algorithms::friedman2_method(input_text, key_size, input_freqs);
 
             std::string outfile_name = val_map.at("dest") == "" ? "keys.txt" : val_map.at("dest");
             crypto::file output_file(outfile_name, std::ios::out | std::ios::binary);

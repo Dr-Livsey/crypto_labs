@@ -58,7 +58,7 @@ namespace crypto
     {
         key frequency_method( const text&, const std::size_t&, const fdict& );
 
-        std::vector<crypto::key> friedman2_method( const text&, const std::size_t&, const alph& );
+        std::vector<crypto::key> friedman2_method( const text&, const std::size_t&, const fdict& );
 
         double get_mut_match_index( const text&, const text& );
 

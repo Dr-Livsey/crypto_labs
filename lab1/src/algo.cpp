@@ -169,7 +169,7 @@ crypto::algorithms::frequency_method( const text &cypher, const std::size_t &key
 }
 
 std::vector<crypto::key>
-crypto::algorithms::friedman2_method( const text &cypher_text, const std::size_t &key_size, const crypto::alph &pt_alph )
+crypto::algorithms::friedman2_method( const text &cypher_text, const std::size_t &key_size, const crypto::fdict &pt_freqs )
 {
     if (key_size < 2){
         throw std::runtime_error("Key size must be > 1");
@@ -192,26 +192,33 @@ crypto::algorithms::friedman2_method( const text &cypher_text, const std::size_t
 
     std::map<byte, byte> shift_map = {{0, 0}};
 
+    double global_delta = pt_freqs.get_delta();
+
+    crypto::alph pt_alph      = pt_freqs.keys();
+    std::size_t  pt_alph_size = pt_freqs.size();
+
     //Find the mutual match index for each column with first
     for ( std::size_t i = 1; i < columns.size(); i++)
     {
         std::vector<double> match_indexes;
 
-        double max_match_idx = 0.;
-        byte   max_shift     = 0;
+        double min_delta    = global_delta;
+        byte   global_shift = 0;
 
-        // Find offset with max match index
-        for ( byte offset = 0; offset < (pt_alph.size() / 2); offset++)
+        // Find local_shift with min delta
+        for ( byte local_shift = 0; local_shift < pt_alph_size; local_shift++)
         {
-            double cur_match_idx = get_mut_match_index(columns[0], columns[i].right_shift(offset, pt_alph));
+            double cur_match_idx = get_mut_match_index(columns[0], columns[i].right_shift(local_shift, pt_alph));
 
-            if (cur_match_idx > max_match_idx){
-                max_shift = offset;
-                max_match_idx = cur_match_idx;
+            double local_delta = std::fabs(global_delta - cur_match_idx);
+            
+            if (local_delta < min_delta){
+                global_shift = local_shift;
+                min_delta    = local_delta;
             }
         }
 
-        shift_map[i] = max_shift;
+        shift_map[i] = global_shift;
     }
 
     std::vector<key> keys;

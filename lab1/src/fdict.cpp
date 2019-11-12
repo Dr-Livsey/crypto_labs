@@ -97,6 +97,18 @@ crypto::fdict::get_most_frequent( void ) const
     return this->as_sorted_vector().back();
 }
 
+double
+crypto::fdict::get_delta( void ) const
+{
+    double result = 0.;
+
+    for (auto& [key, value] : *this){
+        result += value * value;
+    }
+
+    return result;
+}
+
 std::ostream& 
 operator<<( std::ostream& stream, const crypto::fdict& obj)
 {
