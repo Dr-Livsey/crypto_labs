@@ -284,7 +284,7 @@ frontend::get_encrypt_autokey( const crypto::alph &al )
         crypto::key retval;
 
         // Generating key size and input the key
-        std::size_t key_size = std::rand() % 2 ? 3 : 10;
+        std::size_t key_size = 1 + std::rand() % 10;
         std::cout << "Key size = " << key_size << " was generated. Enter the key: ";
         std::getline(std::cin, user_answer);
 
