@@ -13,5 +13,10 @@
         "1" : "file",
         "2" : "dest (*.json)"
     },
+    "find" : {
+        "1" : "what",
+        "2" : "sub",
+        "3" : "dest"
+    },
     "help" : ""
 }

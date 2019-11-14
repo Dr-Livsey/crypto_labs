@@ -104,9 +104,11 @@ sp_cypher::encrypt( const key &k, const crypto::text &plain_text, const subst &s
     crypto::text cypher_text;
 
     // Print loading line if need
+    bool print_endl = false;
     std::size_t loading_parts = ptext_slices_s / 20;
     if (loading_parts > 1)
     {
+        print_endl = true;
         std::cout << "                    " << std::flush;
         std::cout << "                      ]\rEncryption process: [" << std::flush;
     }
@@ -150,7 +152,7 @@ sp_cypher::encrypt( const key &k, const crypto::text &plain_text, const subst &s
         if ( i && loading_parts > 1 && i % loading_parts == 0 ) std::cout << "#" << std::flush;
     }
 
-    std::cout << std::endl;
+    if ( print_endl == true ) std::cout << std::endl;
     return cypher_text;
 }
 
@@ -182,9 +184,11 @@ sp_cypher::decrypt( const key &k, const crypto::text &cypher_text, const subst &
     crypto::text plain_text;
 
     // Print loading line if need
+    bool print_endl = false;
     std::size_t loading_parts = ctext_slices_s / 20;
     if (loading_parts > 1)
     {
+        print_endl = true;
         std::cout << "                    " << std::flush;
         std::cout << "                      ]\rDecryption process: [" << std::flush;
     }
@@ -238,12 +242,44 @@ sp_cypher::decrypt( const key &k, const crypto::text &cypher_text, const subst &
         // Convert it to number
         ulong excess_block_s = block(excess_block_txt).as_ulong();
 
-        if (excess_block_s < 4)
+        if (excess_block_s < block_len_bytes)
         {
             plain_text.erase(plain_text.end() - (2 * block_len_bytes - excess_block_s), plain_text.end());
         }
     }
 
-    std::cout << std::endl;
+    if ( print_endl == true ) std::cout << std::endl;
     return plain_text;
+}
+
+void
+sp_cypher::find_weak_keys( sp_cypher::subst &sub, crypto::file &dest )
+{
+    const std::size_t key_max = 0xffffffff;
+
+    crypto::text    test_text = {'a', 'b', 'c', 'd' };
+
+    // Create loading line
+    bool print_endl = false;
+    std::size_t loading_parts = key_max / 40;
+    if (loading_parts > 1)
+    {
+        print_endl = true;
+        std::cout << "                                                   " << std::flush;
+        std::cout << "                                                  ]\rProcessed: [" << std::flush;
+    }
+
+    for ( std::size_t i = 1; i <= key_max; i++)
+    {
+        key cur_key(i);
+
+        if ( encrypt(cur_key, encrypt(cur_key, test_text, sub), sub) == test_text )
+        {
+            dest << i << std::endl;
+        }
+
+        if ( i % loading_parts == 0 ) std::cout << "#" << std::flush;
+    }
+
+    std::cout << std::endl;
 }

@@ -35,4 +35,5 @@ namespace sp_cypher
     crypto::text encrypt( const key &, const crypto::text &, const subst & );
     crypto::text decrypt( const key &, const crypto::text &, const subst & );
 
+    void find_weak_keys( sp_cypher::subst &sub, crypto::file &dest );
 };

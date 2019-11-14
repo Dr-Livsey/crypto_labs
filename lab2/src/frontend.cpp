@@ -73,14 +73,14 @@ int
 frontend::execute_command( const parser::value_map &val_map)
 {
     // Set general parameters
-    crypto::file input_file(val_map.at("file"));
     std::string  method = val_map.at("method");
     
-    // Read input text
-    crypto::text  input_text(input_file);
-
     if (method == "encrypt" || method == "decrypt")
     {
+        // Read input text
+        crypto::file  input_file(val_map.at("file"));
+        crypto::text  input_text(input_file);
+
         //Set key
         crypto::file key_file(val_map.at("key file"));
         sp_cypher::key key = key_file;
@@ -107,12 +107,29 @@ frontend::execute_command( const parser::value_map &val_map)
     }
     else if ( method == "alph" )
     {
+        // Read input text
+        crypto::file  input_file(val_map.at("file"));
+        crypto::text  input_text(input_file);
+
         crypto::fdict freqs(input_text);
 
         crypto::file output_file(val_map.at("dest (*.json)"), std::ios::out | std::ios::binary);
         output_file << freqs;
 
         std::cout << "Frequencies was putted in \"" << val_map.at("dest (*.json)") << "\"" << std::endl;
+    }
+    else if ( method == "find" )
+    {
+        /*
+         * Open S-subst and dest file
+         */
+        sp_cypher::subst s_sub = val_map.at("sub");
+        crypto::file dest_file(val_map.at("dest"), std::ios::app | std::ios::binary);
+
+        if (val_map.at("what") == "weak-keys")
+        {
+            sp_cypher::find_weak_keys(s_sub, dest_file);
+        }
     }
 
     return EXIT_SUCCESS;
