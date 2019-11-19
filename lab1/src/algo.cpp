@@ -221,17 +221,30 @@ crypto::algorithms::friedman2_method( const text &cypher_text, const std::size_t
         shift_map[i] = global_shift;
     }
 
-    std::vector<key> keys;
-
-    for ( auto alph_it = pt_alph.cbegin(); alph_it != pt_alph.cend(); alph_it++ )
+    // Calculate keys with obtained offsets in shift map
+    auto get_key = [&pt_alph, &shift_map](const crypto::byte &alph_item) -> crypto::key
     {
-        text cur_key;
-        
+        crypto::key cur_key;
+
         // Shift all key bytes by offsets in shift_map relative to first byte
-        for ( std::size_t i = 0; i < key_size; i++){
-            cur_key += { pt_alph.left_shift(*alph_it, shift_map[i])};
+        for ( std::size_t i = 0; i < shift_map.size(); i++){
+            cur_key += { pt_alph.left_shift(alph_item, shift_map.at(i))};
         }
-        keys.push_back(cur_key);
+
+        return cur_key;
+    };
+
+    std::vector<key> keys(pt_alph.size());
+
+    // Get first byte with frequency method
+    crypto::byte local_index  = pt_alph.index(crypto::fdict::get_freq(columns.at(0)).get_most_frequent().first);
+    crypto::byte global_index = pt_alph.index(pt_freqs.get_most_frequent().first); 
+    std::size_t  offset       = (local_index - global_index + pt_alph.size()) % pt_alph.size();
+
+    std::cout << "Most probability key is: [" << get_key(pt_alph.at(offset)) << "]" << std::endl;
+
+    for ( auto alph_item : pt_alph ){
+        keys.push_back(get_key(alph_item));
     }
 
     return keys;

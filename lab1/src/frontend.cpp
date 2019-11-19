@@ -213,7 +213,7 @@ frontend::execute_command( const parser::value_map &val_map)
             crypto::file output_file(outfile_name, std::ios::out | std::ios::binary);
             output_file << keys;
 
-            std::cout << "Keys was putted in \"" << outfile_name << "\"" << std::endl;
+            std::cout << "All keys was putted in \"" << outfile_name << "\"" << std::endl;
         }
         else{
             std::cout << "Key : " << crypto::algorithms::frequency_method(input_text, key_size, input_freqs) << std::endl;
