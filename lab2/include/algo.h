@@ -32,8 +32,20 @@ namespace sp_cypher
     block p_transform_inv (const block & );
 
     // SP-cyphering
-    crypto::text encrypt( const key &, const crypto::text &, const subst & );
-    crypto::text decrypt( const key &, const crypto::text &, const subst & );
+    namespace encrypt
+    {
+        crypto::text algo( const key &, const crypto::text &, const subst & );
+
+        block use_round( const block&, const key &, const subst &, std::size_t r_num = ROUNDS);
+    };
+    namespace decrypt
+    {
+        crypto::text algo( const key &, const crypto::text &, const subst & );
+
+        block use_round( const block&, const key &, const subst &, std::size_t r_num = ROUNDS);
+    };
+    
 
     void find_weak_keys( sp_cypher::subst &sub, crypto::file &dest );
+    void error_prop( sp_cypher::subst &sub, crypto::file &dest);
 };

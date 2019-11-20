@@ -72,10 +72,87 @@ block sp_cypher::p_transform_inv (const block &b )
 }
 
 /*
- * SP-cypher encryption function
+ ! SP-cypher encryption round
+ * @r_num - amount of rounds to be used. By default, this value is equal to ROUNDS
+ */
+sp_cypher::block
+sp_cypher::encrypt::use_round( const block &b, const key &k, const subst &sub, std::size_t r_num)
+{
+    if (r_num == 0) return b;
+
+    auto key_exp = k.expand();
+
+    if ( r_num > key_exp.size() ){
+        throw std::runtime_error("Amounts of rounds must be <= round keys");
+    }
+
+    block cur_block = b;
+    for ( std::size_t i = 0; i < r_num; i++ )
+    {
+        /*
+        * 1. XOR current block with round key
+        */ 
+        block xor_block = cur_block ^ key_exp.at(i);
+        /*
+        * 2. Split block into subblocks
+        * 3. For each subblock use S-substitution
+        */ 
+        block sub_block;
+        for ( auto subblock : xor_block.as_subblocks() )
+        {
+            sub_block <<= SUBBLOCK_SIZE;
+            sub_block |= sub(subblock);
+        }
+        /*
+        * 4. Use P-transorm function
+        */
+        cur_block = p_transform(sub_block);
+    }
+
+    return cur_block;
+}
+/*
+ ! SP-cypher decryption round
+ * @r_num - amount of rounds to be used. By default, this value is equal to ROUNDS
+ */
+sp_cypher::block
+sp_cypher::decrypt::use_round( const block &b, const key &k, const subst &inv_sub, std::size_t r_num)
+{
+    if (r_num == 0) return b;
+
+    auto key_exp = k.expand();
+
+    if ( r_num > key_exp.size() ){
+        throw std::runtime_error("Amounts of rounds must be <= round keys");
+    }
+
+    block cur_block = b;
+    std::size_t   i = 0;
+
+    for ( auto round_key = key_exp.rbegin() + (key_exp.size() - r_num); i < r_num ; round_key++, i++ )
+    {
+        /*
+         * 1. Use inverse P-transorm function
+         * 2. Split block into subblocks
+         * 3. For each subblock use inverse S-substitution
+         */ 
+        block sub_block;
+        for ( auto subblock : p_transform_inv(cur_block).as_subblocks() )
+        {
+            sub_block <<= SUBBLOCK_SIZE;
+            sub_block |= inv_sub(subblock);
+        }
+        cur_block = sub_block ^ *round_key;
+    }
+    
+    return cur_block;
+}
+
+/*
+ ! SP-cypher encryption function
  */
 crypto::text
-sp_cypher::encrypt( const key &k, const crypto::text &plain_text, const subst &sub )
+sp_cypher::encrypt::algo( const key &k, const crypto::text &plain_text, const subst &sub )
 {
     if ( BLOCK_LEN % SUBBLOCK_SIZE != 0 )
         throw std::runtime_error("^(): BLOCK_LEN % SUBBLOCK_SIZE must be equal to 0");
@@ -85,9 +162,6 @@ sp_cypher::encrypt( const key &k, const crypto::text &plain_text, const subst &s
 
     // Block size in bytes
     const std::size_t block_len_bytes = BLOCK_LEN / 8;
-
-    // Key expansion
-    std::vector<key> round_keys = k.expand();
 
     // Divide plain text into slices
     crypto::text::slices ptext_slices   = plain_text.split(block_len_bytes);
@@ -117,36 +191,11 @@ sp_cypher::encrypt( const key &k, const crypto::text &plain_text, const subst &s
      */
     for ( std::size_t i = 0; i < ptext_slices_s; i++ )
     {
-        block cur_block = block(ptext_slices.at(i));
-
-        // Go to rounds
-        for ( auto round_key : round_keys )
-        {
-            /*
-             * 1. XOR current block with round key
-             */ 
-            cur_block = cur_block ^ round_key;
-            /*
-             * 2. Split block into subblocks
-             * 3. For each subblock use S-substitution
-             */ 
-            block sub_cur_block;
-            for ( auto subblock : cur_block.as_subblocks() )
-            {
-                sub_cur_block <<= SUBBLOCK_SIZE;
-                sub_cur_block |= sub(subblock);
-            }
-            /*
-             * 4. Use P-transorm function
-             */
-            cur_block = p_transform(sub_cur_block);
-        }
-
-        // 5. Use whitening
-        cur_block = cur_block ^ key(0xffffffff);
+        block cur_block  = block(ptext_slices.at(i));
+        block encr_block = use_round(cur_block, k, sub) ^ key(0xffffffff);
 
         // Add enrypted block to cypher text 
-        cypher_text += cur_block.as_text();
+        cypher_text += encr_block.as_text();
 
         // Only for loading info
         if ( i && loading_parts > 1 && i % loading_parts == 0 ) std::cout << "#" << std::flush;
@@ -157,10 +206,10 @@ sp_cypher::encrypt( const key &k, const crypto::text &plain_text, const subst &s
 }
 
 /*
- * SP-cypher decryption function
+ ! SP-cypher decryption function
  */
 crypto::text
-sp_cypher::decrypt( const key &k, const crypto::text &cypher_text, const subst &sub )
+sp_cypher::decrypt::algo( const key &k, const crypto::text &cypher_text, const subst &sub )
 {
     if ( BLOCK_LEN % SUBBLOCK_SIZE != 0 )
         throw std::runtime_error("^(): BLOCK_LEN % SUBBLOCK_SIZE must be equal to 0");
@@ -170,9 +219,6 @@ sp_cypher::decrypt( const key &k, const crypto::text &cypher_text, const subst &
 
     // Block size in bytes
     const std::size_t block_len_bytes = BLOCK_LEN / 8;
-
-    // Key expansion
-    std::vector<key> round_keys = k.expand();
 
     // Divide cypher text into slices
     crypto::text::slices ctext_slices   = cypher_text.split(BLOCK_LEN / 8);
@@ -197,37 +243,10 @@ sp_cypher::decrypt( const key &k, const crypto::text &cypher_text, const subst &
      */
     for ( std::size_t i = 0; i < ctext_slices_s; i++ )
     {
-        block cur_block = block(ctext_slices.at(i));
-        /*
-         * Use whitening
-         */
-        cur_block = cur_block ^ key(0xffffffff);
-
-        // Go to rounds in reverse order
-        for ( auto round_key_it = round_keys.rbegin(); round_key_it < round_keys.rend(); round_key_it++ )
-        {
-            /*
-             * 1. Use inverse P-transorm function
-             */
-            cur_block = p_transform_inv(cur_block);
-            /*
-             * 2. Split block into subblocks
-             * 3. For each subblock use inverse S-substitution
-             */ 
-            block sub_cur_block;
-            for ( auto subblock : cur_block.as_subblocks() )
-            {
-                sub_cur_block <<= SUBBLOCK_SIZE;
-                sub_cur_block |= inv_sub(subblock);
-            }
-            /*
-             * 4. XOR current block with round key
-             */ 
-            cur_block = sub_cur_block ^ (*round_key_it);
-        }
+        block cur_block = block(ctext_slices.at(i)) ^ key(0xffffffff);
 
         // Add decrypted block to plain text 
-        plain_text += cur_block.as_text();
+        plain_text += use_round(cur_block, k, inv_sub).as_text();
 
         // Only for loading info
         if ( i && loading_parts > 1 && i % loading_parts == 0 ) std::cout << "#" << std::flush;
@@ -240,7 +259,7 @@ sp_cypher::decrypt( const key &k, const crypto::text &cypher_text, const subst &
         crypto::text excess_block_txt(plain_text.end() - block_len_bytes, plain_text.end());
 
         // Convert it to number
-        ulong excess_block_s = block(excess_block_txt).as_ulong();
+        ulong excess_block_s = block(excess_block_txt).to_ulong();
 
         if (excess_block_s < block_len_bytes)
         {
@@ -257,14 +276,13 @@ sp_cypher::find_weak_keys( sp_cypher::subst &sub, crypto::file &dest )
 {
     const std::size_t key_max = 0xffffffff;
 
-    crypto::text    test_text = {'a', 'b', 'c', 'd' };
+    crypto::text    test_text  = {'a', 'b', 'c', 'd' };
+    block           test_block(test_text);
 
     // Create loading line
-    bool print_endl = false;
     std::size_t loading_parts = key_max / 40;
     if (loading_parts > 1)
     {
-        print_endl = true;
         std::cout << "                                                   " << std::flush;
         std::cout << "                                                  ]\rProcessed: [" << std::flush;
     }
@@ -273,8 +291,10 @@ sp_cypher::find_weak_keys( sp_cypher::subst &sub, crypto::file &dest )
     {
         key cur_key(i);
 
-        if ( encrypt(cur_key, encrypt(cur_key, test_text, sub), sub) == test_text )
-        {
+        block fst_enc = encrypt::use_round(test_block,  cur_key, sub);
+        block sec_enc = encrypt::use_round(fst_enc,     cur_key, sub);
+
+        if ( fst_enc == sec_enc ){
             dest << i << std::endl;
         }
 
@@ -282,4 +302,59 @@ sp_cypher::find_weak_keys( sp_cypher::subst &sub, crypto::file &dest )
     }
 
     std::cout << std::endl;
+}
+
+void 
+sp_cypher::error_prop( sp_cypher::subst &sub, crypto::file &dest )
+{
+    key test_key(783782231);
+
+    for (std::size_t rounds_am = 1; rounds_am <= 4; rounds_am++)
+    {
+        dest << "Round: " << rounds_am << std::endl;
+
+        bool round_step = true;
+        for (std::size_t offset = 0; offset < 32; offset++)
+        {
+            dest << "\tOffset: " << offset << " -> " << std::flush;
+
+            std::size_t acc = 0;
+            bool offset_step = false;
+            for (std::size_t test_value = 0; test_value <= 0xffffffff; test_value++)
+            {
+                block set_bit(test_value);
+                block zero_bit(test_value);
+
+                set_bit[offset]  = 1;
+                zero_bit[offset] = 0;
+
+                block encr_block_1 = encrypt::use_round(set_bit, test_key, sub, rounds_am);
+                block encr_block_0 = encrypt::use_round(zero_bit, test_key, sub, rounds_am);
+
+                acc |= encr_block_1.to_ulong() ^ encr_block_0.to_ulong();
+
+                if (acc == 0xffffffff)
+                {
+                    offset_step = true;
+                    break;
+                }
+            }
+
+            if (!offset_step)
+            {
+                dest << "False" << std::endl;
+                round_step = false;
+                break;
+            }
+            else {
+                dest << "True" << std::endl;
+            }
+        }
+        dest << "\tError propagation is ";
+        dest << ((round_step == true) ? "FOUND\n" : "NOT FOUND\n") << std::endl;
+
+        if (round_step == true){
+            break;
+        }
+    }
 }

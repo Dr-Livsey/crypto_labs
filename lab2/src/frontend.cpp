@@ -95,9 +95,9 @@ frontend::execute_command( const parser::value_map &val_map)
         crypto::text output;
         
         if ( method == "encrypt" )
-            output = sp_cypher::encrypt(key, input_text, S);
+            output = sp_cypher::encrypt::algo(key, input_text, S);
         else
-            output = sp_cypher::decrypt(key, input_text, S);
+            output = sp_cypher::decrypt::algo(key, input_text, S);
 
         // Putting the result into output file
         crypto::file output_file(val_map.at("dest"), std::ios::out | std::ios::binary);
@@ -129,6 +129,13 @@ frontend::execute_command( const parser::value_map &val_map)
         if (val_map.at("what") == "weak-keys")
         {
             sp_cypher::find_weak_keys(s_sub, dest_file);
+        }
+        else if (val_map.at("what") == "error_prop")
+        {
+            sp_cypher::error_prop(s_sub, dest_file);
+        }
+        else {
+            std::cout << "Unknown method. Available: [weak-keys], [error_prop]" << std::endl;
         }
     }
 
