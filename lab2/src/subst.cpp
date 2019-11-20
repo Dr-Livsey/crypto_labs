@@ -27,7 +27,7 @@ subst::subst( const std::string &json_file )
 block 
 subst::operator()( const block &b ) const
 {
-    return block(this->at(b.as_ulong()).at(1).get<unsigned>());
+    return block(this->at(b.to_ulong()).at(1).get<unsigned>());
 }
 /* 
  * Find inverse substitution.

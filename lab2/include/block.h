@@ -32,13 +32,11 @@ namespace sp_cypher
         block( crypto::text & );
 
         block  operator^( const key &);
-        // block& operator+( const subblock_t &);
 
         subblocks_t  as_subblocks( void ) const;
         template< std::size_t subblock_s> std::vector<std::bitset<subblock_s>> as_subblocks( void ) const;
 
         crypto::text as_text( void ) const;
-        ulong        as_ulong( void) const;
 
         ~block() = default;        
     };

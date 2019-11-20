@@ -84,19 +84,3 @@ block::as_text( void ) const
 
     return result;
 }
-
-ulong
-block::as_ulong( void ) const
-{
-    return std::stoul(to_string(), nullptr, 2);
-}
-
-// block& 
-// block::operator+( const subblock_t &subblock)
-// {
-//     if ( BLOCK_LEN % SUBBLOCK_SIZE != 0 )
-//         throw std::runtime_error("^(): BLOCK_LEN % SUBBLOCK_SIZE must be equal to 0");
-
-//     (*this) <<= SUBBLOCK_SIZE;
-//     (*this) |= block(subblock);
-// }
