@@ -274,20 +274,21 @@ sp_cypher::decrypt::algo( const key &k, const crypto::text &cypher_text, const s
 void
 sp_cypher::find_weak_keys( sp_cypher::subst &sub, crypto::file &dest )
 {
+    /*
+     * Already found:
+     * 248384847
+     * 794251893
+     */
+
     const std::size_t key_max = 0xffffffff;
 
     crypto::text    test_text  = {'a', 'b', 'c', 'd' };
     block           test_block(test_text);
 
     // Create loading line
-    std::size_t loading_parts = key_max / 40;
-    if (loading_parts > 1)
-    {
-        std::cout << "                                                   " << std::flush;
-        std::cout << "                                                  ]\rProcessed: [" << std::flush;
-    }
+    std::size_t loading_parts = key_max / 100;
 
-    for ( std::size_t i = 1; i <= key_max; i++)
+    for ( std::size_t i = 794251894; i <= key_max; i++)
     {
         key cur_key(i);
 
@@ -298,7 +299,7 @@ sp_cypher::find_weak_keys( sp_cypher::subst &sub, crypto::file &dest )
             dest << i << std::endl;
         }
 
-        if ( i % loading_parts == 0 ) std::cout << "#" << std::flush;
+        if ( i % loading_parts == 0 ) std::cout << i << std::flush;
     }
 
     std::cout << std::endl;
