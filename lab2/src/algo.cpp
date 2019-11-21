@@ -288,7 +288,7 @@ sp_cypher::find_weak_keys( sp_cypher::subst &sub, crypto::file &dest )
     // Create loading line
     std::size_t loading_parts = key_max / 100;
 
-    for ( std::size_t i = 794251894; i <= key_max; i++)
+    for ( std::size_t i = 1073741800; i <= key_max; i++)
     {
         key cur_key(i);
 
@@ -319,26 +319,36 @@ sp_cypher::error_prop( sp_cypher::subst &sub, crypto::file &dest )
         {
             dest << "\tOffset: " << offset << " -> " << std::flush;
 
-            std::size_t acc = 0;
+            std::size_t acc = 0, prev_acc = 0;
+            // Amount of times that 'acc' equal to previous iteration 
+            std::size_t same_count = 1000000;
+            
             bool offset_step = false;
             for (std::size_t test_value = 0; test_value <= 0xffffffff; test_value++)
             {
                 block set_bit(test_value);
                 block zero_bit(test_value);
 
-                set_bit[offset]  = 1;
-                zero_bit[offset] = 0;
+                set_bit[offset]  = true;
+                zero_bit[offset] = false;
 
                 block encr_block_1 = encrypt::use_round(set_bit, test_key, sub, rounds_am);
                 block encr_block_0 = encrypt::use_round(zero_bit, test_key, sub, rounds_am);
 
-                acc |= encr_block_1.to_ulong() ^ encr_block_0.to_ulong();
+                acc |= (encr_block_1.to_ulong() ^ encr_block_0.to_ulong());
+
+                std::cout << block(acc) << std::endl;
+
+                same_count = (acc == prev_acc) ? same_count - 1 : same_count;
 
                 if (acc == 0xffffffff)
                 {
                     offset_step = true;
                     break;
                 }
+                else if (!same_count) break;
+
+                prev_acc = acc;
             }
 
             if (!offset_step)
