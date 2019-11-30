@@ -260,7 +260,10 @@ sp_cypher::decrypt::algo( const key &k, const crypto::text &cypher_text, const s
         // Convert it to number
         ulong excess_block_s = block(excess_block_txt).to_ulong();
 
-        plain_text.erase(plain_text.end() - (2 * block_len_bytes - excess_block_s), plain_text.end());
+        if (excess_block_s <= block_len_bytes)
+        {
+            plain_text.erase(plain_text.end() - (2 * block_len_bytes - excess_block_s), plain_text.end());
+        }
     }
 
     if ( print_endl == true ) std::cout << std::endl;
