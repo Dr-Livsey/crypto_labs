@@ -88,12 +88,16 @@ frontend::execute_command( const parser::value_map &val_map)
         // Set S-substitution
         sp_cypher::subst S("src/sub.json");
 
+        // Set counter
+        crypto::file init_vector_file("src/IV.txt");
+        sp_cypher::counter cnt(init_vector_file);
+
         crypto::text output;
         
         if ( method == "encrypt" )
-            output = sp_cypher::encrypt::algo(key, input_text, S);
+            output = sp_cypher::encrypt::algo(key, input_text, S, cnt);
         else
-            output = sp_cypher::decrypt::algo(key, input_text, S);
+            output = sp_cypher::decrypt::algo(key, input_text, S, cnt);
 
         // Putting the result into output file
         crypto::file output_file(val_map.at("dest"), std::ios::out | std::ios::binary);
