@@ -13,7 +13,7 @@ counter::counter( crypto::file &f )
 counter& 
 counter::operator++(void)
 {
-    data = block(static_cast<unsigned>(3*(data.to_ulong() + 1)));
+    data = block(static_cast<unsigned>((3*data.to_ulong() + 1) % 0xffffffff));
     return *this;
 }
 
