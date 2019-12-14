@@ -1,13 +1,16 @@
 lab1/.vscode/*
 lab2/.vscode/*
 lab4/.vscode
+lab3/.vscode
 lab1/bin/*
 lab2/bin/*
 lab1/*.json
 lab1/obj/*
 lab2/obj/*
 lab4/obj/*
+lab3/obj/*
 lab4/scripts
+lab3/scripts
 lab4/bin
 lab1/texts/*
 lab1/*.txt

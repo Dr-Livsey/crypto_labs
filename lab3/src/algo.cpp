@@ -157,7 +157,7 @@ sp_cypher::decrypt::use_round( const block &b, const key &k, const subst &inv_su
  ! SP-cypher encryption function
  */
 crypto::text
-sp_cypher::encrypt::algo( const key &k, const crypto::text &plain_text, const subst &sub, counter &cnt )
+sp_cypher::encrypt::algo( const key &k, const crypto::text &plain_text, const subst &sub )
 {
     if ( BLOCK_LEN % SUBBLOCK_SIZE != 0 )
         throw std::runtime_error("^(): BLOCK_LEN % SUBBLOCK_SIZE must be equal to 0");
@@ -171,9 +171,12 @@ sp_cypher::encrypt::algo( const key &k, const crypto::text &plain_text, const su
     // Divide plain text into slices
     crypto::text::slices ptext_slices   = plain_text.split(block_len_bytes);
  
-    // Add excess block with size of last text slice
-    block excess_block(ptext_slices.back().size());
-    ptext_slices.push_back(excess_block.as_text());
+    if (plain_text.size() % block_len_bytes != 0)
+    {
+        // Add excess block with size of last text slice
+        block excess_block(ptext_slices.back().size());
+        ptext_slices.push_back(excess_block.as_text());
+    }
 
     std::size_t ptext_slices_s = ptext_slices.size();
 
@@ -194,12 +197,10 @@ sp_cypher::encrypt::algo( const key &k, const crypto::text &plain_text, const su
     for ( std::size_t i = 0; i < ptext_slices_s; i++ )
     {
         block cur_block  = block(ptext_slices.at(i));
-        block encr_block = cur_block ^ (use_round(*cnt, k, sub) ^ key(0xffffffff));
+        block encr_block = use_round(cur_block, k, sub) ^ key(0xffffffff);
 
         // Add enrypted block to cypher text 
         cypher_text += encr_block.as_text();
-
-        ++cnt;
 
         // Only for loading info
         if ( i && loading_parts > 1 && i % loading_parts == 0 ) std::cout << "#" << std::flush;
@@ -213,7 +214,7 @@ sp_cypher::encrypt::algo( const key &k, const crypto::text &plain_text, const su
  ! SP-cypher decryption function
  */
 crypto::text
-sp_cypher::decrypt::algo( const key &k, const crypto::text &cypher_text, const subst &sub, counter &cnt )
+sp_cypher::decrypt::algo( const key &k, const crypto::text &cypher_text, const subst &sub )
 {
     if ( BLOCK_LEN % SUBBLOCK_SIZE != 0 )
         throw std::runtime_error("^(): BLOCK_LEN % SUBBLOCK_SIZE must be equal to 0");
@@ -227,6 +228,9 @@ sp_cypher::decrypt::algo( const key &k, const crypto::text &cypher_text, const s
     // Divide cypher text into slices
     crypto::text::slices ctext_slices   = cypher_text.split(BLOCK_LEN / 8);
     std::size_t          ctext_slices_s = ctext_slices.size();
+
+    // Inverse S-substitution
+    subst inv_sub = ~sub;
 
     crypto::text plain_text;
 
@@ -244,13 +248,10 @@ sp_cypher::decrypt::algo( const key &k, const crypto::text &cypher_text, const s
      */
     for ( std::size_t i = 0; i < ctext_slices_s; i++ )
     {
-        block cur_block  = block(ctext_slices.at(i));
-        block decr_block = cur_block ^ (encrypt::use_round(*cnt, k, sub) ^ key(0xffffffff));
+        block cur_block = block(ctext_slices.at(i)) ^ key(0xffffffff);
 
         // Add decrypted block to plain text 
-        plain_text += decr_block.as_text();
-
-        ++cnt;
+        plain_text += use_round(cur_block, k, inv_sub).as_text();
 
         // Only for loading info
         if ( i && loading_parts > 1 && i % loading_parts == 0 ) std::cout << "#" << std::flush;
@@ -265,7 +266,7 @@ sp_cypher::decrypt::algo( const key &k, const crypto::text &cypher_text, const s
         // Convert it to number
         ulong excess_block_s = block(excess_block_txt).to_ulong();
 
-        if (excess_block_s <= block_len_bytes)
+        if (excess_block_s < block_len_bytes)
         {
             plain_text.erase(plain_text.end() - (2 * block_len_bytes - excess_block_s), plain_text.end());
         }

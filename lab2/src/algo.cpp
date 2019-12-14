@@ -45,7 +45,7 @@ key::expand( void ) const
         throw std::runtime_error("expand(): Amount of round keys != " + std::to_string(ROUNDS));
 
     // Hardcoded expansion
-    return { *this, ~(*this), *this, ~(*this) };
+    return round_keys;
 }
 
 /*
@@ -98,10 +98,12 @@ sp_cypher::encrypt::use_round( const block &b, const key &k, const subst &sub, s
         * 3. For each subblock use S-substitution
         */ 
         block sub_block;
-        for ( auto subblock : xor_block.as_subblocks() )
+        auto  subblocks = xor_block.as_subblocks();
+
+        for ( auto s = subblocks.rbegin(); s < subblocks.rend(); s++ )
         {
             sub_block <<= SUBBLOCK_SIZE;
-            sub_block |= sub(subblock);
+            sub_block |= sub(*s);
         }
         /*
         * 4. Use P-transorm function
@@ -137,10 +139,12 @@ sp_cypher::decrypt::use_round( const block &b, const key &k, const subst &inv_su
          * 3. For each subblock use inverse S-substitution
          */ 
         block sub_block;
-        for ( auto subblock : p_transform_inv(cur_block).as_subblocks() )
+        auto  subblocks = p_transform_inv(cur_block).as_subblocks();
+
+        for ( auto s = subblocks.rbegin(); s < subblocks.rend(); s++ )
         {
             sub_block <<= SUBBLOCK_SIZE;
-            sub_block |= inv_sub(subblock);
+            sub_block |= inv_sub(*s);
         }
         cur_block = sub_block ^ *round_key;
     }
@@ -166,12 +170,12 @@ sp_cypher::encrypt::algo( const key &k, const crypto::text &plain_text, const su
     // Divide plain text into slices
     crypto::text::slices ptext_slices   = plain_text.split(block_len_bytes);
  
-    if (plain_text.size() % block_len_bytes != 0)
-    {
+    // if (plain_text.size() % block_len_bytes != 0)
+    // {
         // Add excess block with size of last text slice
         block excess_block(ptext_slices.back().size());
         ptext_slices.push_back(excess_block.as_text());
-    }
+    // }
 
     std::size_t ptext_slices_s = ptext_slices.size();
 
@@ -261,7 +265,7 @@ sp_cypher::decrypt::algo( const key &k, const crypto::text &cypher_text, const s
         // Convert it to number
         ulong excess_block_s = block(excess_block_txt).to_ulong();
 
-        if (excess_block_s < block_len_bytes)
+        if (excess_block_s <= block_len_bytes)
         {
             plain_text.erase(plain_text.end() - (2 * block_len_bytes - excess_block_s), plain_text.end());
         }
